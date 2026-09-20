@@ -102,6 +102,12 @@ export interface RequirementsPackage {
   historicOfferings: Record<string, HistoricOffering[]>;
   currentTerm: SemesterTerm;
   sources: SourceReference[];
+  /** LLM-generated analysis of the student's transcript and optimal paths */
+  llmAnalysis?: {
+    criticalPathCourses: string[];
+    recommendedFirstSemester: string[];
+    insights: string[];
+  };
 }
 
 // ─── Agent 2 → Agent 3: ExperiencePackage ───────────────────────────────────
@@ -135,6 +141,12 @@ export interface ExperiencePackage {
   instructorRatings: Record<string, InstructorRating>; // keyed by instructor name
   courseRigorSummaries: Record<string, CourseRigorSummary>;
   sources: SourceReference[];
+  /** LLM-generated professor insights and pairing recommendations */
+  llmProfInsights?: {
+    topRecommendations: Array<{ instructor: string; course: string; reason: string }>;
+    avoidWarnings: Array<{ instructor: string; reason: string }>;
+    difficultyPairings: string[];
+  };
 }
 
 // ─── Agent 3 → Verifier → Agent 4: PlanGraph ────────────────────────────────

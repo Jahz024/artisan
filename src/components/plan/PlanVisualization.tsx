@@ -140,7 +140,7 @@ function SemesterDropColumn({
       ref={setNodeRef}
       className={cn(
         "absolute top-0 rounded-xl border border-transparent transition-colors",
-        isOver && "border-cyan-400/40 bg-cyan-500/5"
+        isOver && "border-[var(--vt-orange)]/40 bg-orange-50"
       )}
       style={{
         left: x - 110,
@@ -161,11 +161,11 @@ function DragTreeNodePreview({ node }: { node: PlanNode }) {
         style={{
           width: r * 2,
           height: r * 2,
-          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), transparent 45%), ${nodeFillForStatus(node.status)}`,
+          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55), transparent 50%), ${nodeFillForStatus(node.status)}`,
           border: `2px solid ${nodeStrokeForStatus(node.status)}`,
         }}
       />
-      <span className="font-mono-accent text-xs font-bold text-white">
+      <span className="font-mono-accent text-xs font-bold text-slate-900">
         {formatCourseCode(node.courseId)}
       </span>
     </div>
@@ -444,8 +444,7 @@ export function PlanVisualization({
         <TreeLegend />
 
         <div
-          className="relative max-h-[min(75vh,780px)] overflow-x-auto overflow-y-auto rounded-2xl border border-slate-700/40 p-4"
-          style={{ backgroundColor: "#0A0E17" }}
+          className="relative max-h-[min(75vh,780px)] overflow-x-auto overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
           onWheel={handleWheel}
         >
           <motion.div
@@ -473,12 +472,12 @@ export function PlanVisualization({
                     <path
                       d="M 32 0 L 0 0 0 32"
                       fill="none"
-                      stroke="rgba(148, 163, 184, 0.06)"
+                      stroke="rgba(148, 163, 184, 0.12)"
                       strokeWidth="1"
                     />
                   </pattern>
-                  <filter id="organic-glow" x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="2.2" result="blur" />
+                  <filter id="organic-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.2" result="blur" />
                     <feMerge>
                       <feMergeNode in="blur" />
                       <feMergeNode in="SourceGraphic" />
@@ -511,15 +510,15 @@ export function PlanVisualization({
                         width={pillW}
                         height={26}
                         rx={13}
-                        fill="rgba(15, 23, 42, 0.85)"
-                        stroke="rgba(148, 163, 184, 0.2)"
+                        fill="#ffffff"
+                        stroke="#e2e8f0"
                         strokeWidth={1}
                       />
                       <text
                         x={col.x}
                         y={col.labelY}
                         textAnchor="middle"
-                        className="fill-slate-100 font-bold"
+                        className="fill-slate-800 font-bold"
                         style={{ fontSize: 18, fontWeight: 700 }}
                       >
                         {label}
@@ -529,7 +528,7 @@ export function PlanVisualization({
                         y1={col.labelY + 10}
                         x2={col.x + 52}
                         y2={col.labelY + 10}
-                        stroke="rgba(148, 163, 184, 0.35)"
+                        stroke="rgba(148, 163, 184, 0.5)"
                         strokeWidth={1.5}
                         strokeLinecap="round"
                       />
@@ -592,7 +591,7 @@ export function PlanVisualization({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="fixed bottom-8 left-1/2 z-50 max-w-md -translate-x-1/2 rounded-xl border border-red-500/40 bg-slate-950/95 px-4 py-3 text-center text-sm text-red-100 shadow-xl backdrop-blur-md"
+              className="fixed bottom-8 left-1/2 z-50 max-w-md -translate-x-1/2 rounded-xl border border-red-200 bg-white px-4 py-3 text-center text-sm text-red-700 shadow-lg"
               role="status"
             >
               {moveError}

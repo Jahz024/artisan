@@ -3,6 +3,7 @@
  *
  * Fetches real professor ratings from the RateMyProfessor GraphQL API.
  * Falls back to pre-cached data when the live API is unreachable.
+ * Uses LLM to synthesize professor reviews into actionable recommendations.
  */
 
 import type {
@@ -13,6 +14,7 @@ import type {
 } from "@/types/contracts";
 import { fetchInstructorRating } from "@/lib/rmp-fetcher";
 import { getRMPData } from "@/data/rmp-ratings";
+import { chatJSON } from "@/lib/llm";
 
 type ProgressCallback = (message: string, progress: number) => void;
 
@@ -47,10 +49,9 @@ export async function runAgent2(
 
   for (const name of instructors) {
     count++;
-    const progress = Math.round((count / total) * 80) + 10;
+    const progress = Math.round((count / total) * 60) + 5;
     onProgress(`Querying RMP for ${name}… (${count}/${total})`, progress);
 
-    // Try the live RMP GraphQL API first
     try {
       const liveRating = await fetchInstructorRating(name);
       if (liveRating && liveRating.numRatings > 0) {
@@ -59,11 +60,9 @@ export async function runAgent2(
         continue;
       }
     } catch (err) {
-      // Live API failed — fall through to cache
       console.warn(`RMP live fetch failed for ${name}:`, err);
     }
 
-    // Fallback to cached data
     if (cachedRMP[name]) {
       instructorRatings[name] = cachedRMP[name];
       cacheFallbacks++;
@@ -93,9 +92,10 @@ export async function runAgent2(
 
   onProgress(
     `Fetched ${liveFetches} live ratings, ${cacheFallbacks} from cache. Building rigor summaries…`,
-    92
+    70
   );
 
+  // Build basic rigor summaries
   const courseRigorSummaries: Record<string, CourseRigorSummary> = {};
   for (const [courseId, courseInfo] of Object.entries(reqPackage.courseDetails)) {
     const relevantInstructors = reqPackage.currentTermSections
@@ -126,6 +126,42 @@ export async function runAgent2(
     };
   }
 
+  // ─── LLM: Synthesize professor insights ───────────────────────────────
+  onProgress("Using AI to synthesize professor recommendations…", 80);
+
+  const ratedInstructors = Object.values(instructorRatings)
+    .filter((r) => r.numRatings > 0)
+    .slice(0, 20);
+
+  const profSummary = ratedInstructors
+    .map((r) => `${r.name}: ${r.overallRating}/5 (${r.numRatings} ratings, difficulty ${r.difficulty}/5, ${r.wouldTakeAgain}% would retake). Feedback: ${r.paraphrasedFeedback.rigor}`)
+    .join("\n");
+
+  interface LLMProfInsights {
+    topRecommendations: Array<{ instructor: string; course: string; reason: string }>;
+    avoidWarnings: Array<{ instructor: string; reason: string }>;
+    difficultyPairings: string[];
+  }
+
+  const profInsights = await chatJSON<LLMProfInsights>(
+    `You are a Virginia Tech academic advisor. Given professor rating data, provide actionable recommendations. Return JSON with:
+- topRecommendations: up to 5 instructor-course pairs you'd recommend and why
+- avoidWarnings: any instructors students should be cautious about and why
+- difficultyPairings: 2-3 tips about which courses to pair or avoid pairing in the same semester based on difficulty`,
+    `Professor ratings for upcoming courses:\n${profSummary}\n\nCourse difficulty data:\n${
+      Object.values(courseRigorSummaries)
+        .filter((r) => r.averageDifficulty > 0)
+        .slice(0, 15)
+        .map((r) => `${r.courseId}: difficulty ${r.averageDifficulty}/5, ${r.workloadDescription}`)
+        .join("\n")
+    }`,
+    { topRecommendations: [], avoidWarnings: [], difficultyPairings: [] }
+  );
+
+  if (profInsights.difficultyPairings.length > 0) {
+    onProgress(`AI tip: ${profInsights.difficultyPairings[0]}`, 90);
+  }
+
   const sourceLabel =
     liveFetches > 0
       ? `Rate My Professors (${liveFetches} live, ${cacheFallbacks} cached)`
@@ -136,6 +172,11 @@ export async function runAgent2(
   return {
     instructorRatings,
     courseRigorSummaries,
+    llmProfInsights: {
+      topRecommendations: profInsights.topRecommendations,
+      avoidWarnings: profInsights.avoidWarnings,
+      difficultyPairings: profInsights.difficultyPairings,
+    },
     sources: [
       {
         type: "rmp",

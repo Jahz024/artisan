@@ -81,16 +81,16 @@ export function SemesterCreditControl({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-800/80 hover:text-cyan-300",
-          open && "bg-cyan-500/10 text-cyan-300"
+          "rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--vt-maroon)]",
+          open && "bg-orange-50 text-[var(--vt-orange)]"
         )}
       >
         <Settings2 className="h-3.5 w-3.5" />
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-full z-30 mt-2 w-72 rounded-xl border border-cyan-500/25 bg-slate-950/95 p-4 shadow-[var(--glow-cyan)] backdrop-blur-md">
-          <p className="text-xs font-medium text-slate-200">
+        <div className="absolute left-0 top-full z-30 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
+          <p className="text-xs font-medium text-slate-800">
             Credits for {semester.term.label}
           </p>
           <p className="mt-1 text-xs text-slate-500 tabular-nums">
@@ -113,11 +113,11 @@ export function SemesterCreditControl({
           </Button>
 
           {lastSummary ? (
-            <p className="mt-3 text-xs leading-relaxed text-cyan-100/90">{lastSummary}</p>
+            <p className="mt-3 text-xs leading-relaxed text-slate-700">{lastSummary}</p>
           ) : null}
 
           {lastSuggestionIds.length > 0 ? (
-            <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs text-slate-300">
+            <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs text-slate-700">
               {lastSuggestionIds.map((id) => {
                 const node = planGraph.nodes.find((n) => n.id === id);
                 if (!node) return null;
@@ -130,8 +130,8 @@ export function SemesterCreditControl({
                     className={cn(
                       "rounded border px-2 py-1",
                       active
-                        ? "border-violet-400/50 bg-violet-500/10 text-violet-100"
-                        : "border-slate-700/60 bg-slate-900/50"
+                        ? "border-violet-300 bg-violet-50 text-violet-900"
+                        : "border-slate-200 bg-slate-50"
                     )}
                   >
                     {formatCourseCode(node.courseId)} · {creditsForNode(node)} cr — {title}

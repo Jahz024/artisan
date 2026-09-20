@@ -61,23 +61,22 @@ export function SemesterColumn({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: columnIndex * 0.06 }}
       className={cn(
-        "relative flex w-[220px] shrink-0 flex-col rounded-xl border border-slate-700/50 bg-slate-900/40",
-        isOver && "border-cyan-400/50 bg-cyan-500/5 shadow-[var(--glow-cyan)]"
+        "relative flex w-[220px] shrink-0 flex-col rounded-xl border border-slate-200 bg-white shadow-sm",
+        isOver && "border-[var(--vt-orange)]/50 bg-orange-50/50 shadow-md"
       )}
     >
-      <header className="relative border-b border-cyan-500/20 px-3 pb-3 pt-3">
-        <div className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent shadow-[var(--glow-cyan)]" />
+      <header className="relative border-b border-slate-200 px-3 pb-3 pt-3">
         <div className="flex flex-col gap-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-400 shadow-[var(--glow-cyan)]" />
-                <h3 className="text-sm font-semibold leading-tight text-slate-50">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--vt-maroon)]" />
+                <h3 className="text-sm font-semibold leading-tight text-slate-900">
                   {semester.term.label}
                 </h3>
               </div>
             </div>
-            <span className="shrink-0 rounded-full border border-cyan-500/30 bg-cyan-950/50 px-2 py-0.5 font-mono-accent text-[10px] text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+            <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono-accent text-[10px] text-slate-700">
               {semester.totalCredits} cr
             </span>
             {onSemesterCreditTarget ? (

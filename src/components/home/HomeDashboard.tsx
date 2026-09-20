@@ -34,14 +34,14 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
   }, [session?.user]);
 
   return (
-    <div className="relative flex min-h-full flex-1 flex-col bg-circuit-grid">
-      <header className="relative z-10 flex items-center justify-between px-6 py-5 lg:px-10">
+    <div className="relative flex min-h-full flex-1 flex-col bg-slate-50">
+      <header className="relative z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-5 lg:px-10">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--vt-maroon)]/30 text-sm font-bold text-[var(--vt-orange)] ring-1 ring-[var(--vt-maroon)]/50">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--vt-maroon)] text-sm font-bold text-white shadow-sm">
             VT
           </span>
-          <span className="text-lg font-semibold tracking-tight text-slate-100">
-            Hokie <span className="text-cyan-400">Pathfinder</span>
+          <span className="text-lg font-semibold tracking-tight text-slate-900">
+            Hokie <span className="text-[var(--vt-orange)]">Pathfinder</span>
           </span>
         </Link>
         <div className="flex items-center gap-2">
@@ -55,7 +55,7 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
             {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </Button>
           {session?.user ? (
-            <span className="hidden text-sm text-slate-400 sm:inline">
+            <span className="hidden text-sm text-slate-600 sm:inline">
               {session.user.name ?? session.user.email}
             </span>
           ) : null}
@@ -70,14 +70,14 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
             animate={{ opacity: 1, y: 0 }}
             className="relative z-10 max-w-2xl"
           >
-            <p className="font-mono-accent text-xs uppercase tracking-[0.3em] text-cyan-500/80">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--vt-maroon)]">
               Virginia Tech · Degree planning
             </p>
-            <h1 className="mt-4 text-4xl font-bold leading-tight text-slate-50 sm:text-5xl glow-text-cyan">
+            <h1 className="mt-4 text-4xl font-bold leading-tight text-slate-900 sm:text-5xl">
               Map your path to graduation
             </h1>
-            <p className="mt-4 text-lg text-slate-400">
-              Upload your transcript, set preferences, and watch five AI agents weave a glowing
+            <p className="mt-4 text-lg text-slate-600">
+              Upload your transcript, set preferences, and let five AI agents build a clear
               prerequisite map — optimized for professors, rigor, and your schedule.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -102,7 +102,7 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
                 Demo login
               </Button>
             </div>
-            <p className="mt-4 text-xs text-slate-600">Demo: demo@vt.edu / password: demo</p>
+            <p className="mt-4 text-xs text-slate-500">Demo: demo@vt.edu / password: demo</p>
           </motion.div>
         </main>
       ) : (
@@ -112,11 +112,11 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
               <motion.h1
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-3xl font-bold text-slate-50"
+                className="text-3xl font-bold text-slate-900"
               >
                 Hey, {session.user.name?.split(" ")[0] ?? "Hokie"} 👋
               </motion.h1>
-              <p className="mt-1 text-slate-400">Your saved academic paths light up here.</p>
+              <p className="mt-1 text-slate-600">Your saved academic plans appear here.</p>
             </div>
             <Link href="/create">
               <Button type="button" className="w-full sm:w-auto">
@@ -132,11 +132,11 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="mt-16 rounded-2xl border border-dashed border-cyan-500/25 bg-slate-900/40 p-12 text-center"
+              className="mt-16 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm"
             >
-              <p className="text-lg text-slate-300">No plans yet — your first trace awaits.</p>
+              <p className="text-lg text-slate-800">No plans yet — start your first roadmap.</p>
               <p className="mt-2 text-sm text-slate-500">
-                Start with a transcript upload or demo data to generate a circuit-board roadmap.
+                Upload a transcript or use demo data to generate your degree plan.
               </p>
               <Link href="/create" className="mt-6 inline-block">
                 <Button type="button">Start planning</Button>

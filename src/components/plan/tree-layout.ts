@@ -311,44 +311,45 @@ export function edgeWaveOffset(fromId: string, toId: string): number {
 export function branchColorForStatus(status: PlanNode["status"], highlighted: boolean): string {
   switch (status) {
     case "completed":
-      return highlighted ? "#9CA3AF" : "#6B7280";
+      return highlighted ? "#CBD5E1" : "#94A3B8";
     case "in_progress":
       return highlighted ? "#34D399" : "#10B981";
     case "planned_next":
+      return highlighted ? "#F0A060" : "#E87722";
     case "planned_future":
-      return highlighted ? "#FBBF24" : "#F59E0B";
+      return highlighted ? "#FCD34D" : "#F59E0B";
     default:
-      return "#6B7280";
+      return "#94A3B8";
   }
 }
 
 export function nodeFillForStatus(status: PlanNode["status"]): string {
   switch (status) {
     case "completed":
-      return "#6B7280";
+      return "#94A3B8";
     case "in_progress":
       return "#10B981";
     case "planned_next":
-      return "#F59E0B";
+      return "#E87722";
     case "planned_future":
-      return "rgba(245, 158, 11, 0.7)";
+      return "#FBBF24";
     default:
-      return "#6B7280";
+      return "#94A3B8";
   }
 }
 
 export function nodeStrokeForStatus(status: PlanNode["status"]): string {
   switch (status) {
     case "completed":
-      return "#4B5563";
+      return "#64748B";
     case "in_progress":
       return "#059669";
     case "planned_next":
-      return "#D97706";
+      return "#C4621A";
     case "planned_future":
-      return "#B45309";
+      return "#D97706";
     default:
-      return "#374151";
+      return "#64748B";
   }
 }
 

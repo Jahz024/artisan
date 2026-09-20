@@ -86,21 +86,21 @@ export function AgentActivityFeed({ events, isGenerating, className }: AgentActi
     <motion.section
       layout
       className={cn(
-        "glass-panel overflow-hidden rounded-2xl border border-cyan-500/20",
+        "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm",
         className
       )}
     >
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-800/40"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50"
         aria-expanded={expanded}
       >
         <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-cyan-400" />
-          <span className="text-sm font-semibold text-slate-100">Agent pipeline</span>
+          <Zap className="h-4 w-4 text-[var(--vt-orange)]" />
+          <span className="text-sm font-semibold text-slate-900">Agent pipeline</span>
           {isGenerating ? (
-            <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wide text-cyan-300">
+            <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-[var(--vt-orange)]">
               Live
             </span>
           ) : null}
@@ -114,7 +114,7 @@ export function AgentActivityFeed({ events, isGenerating, className }: AgentActi
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-slate-700/50"
+            className="border-t border-slate-200"
           >
             <div className="flex gap-2 overflow-x-auto px-4 py-3">
               {AGENT_ORDER.map((id, idx) => (
@@ -127,7 +127,7 @@ export function AgentActivityFeed({ events, isGenerating, className }: AgentActi
                   />
                   {idx < AGENT_ORDER.length - 1 ? (
                     <motion.div
-                      className="h-px w-6 bg-gradient-to-r from-cyan-500/50 to-transparent"
+                      className="h-px w-6 bg-gradient-to-r from-slate-300 to-transparent"
                       animate={
                         completedAgents.has(id)
                           ? { opacity: [0.4, 1, 0.4], scaleX: [0.8, 1, 0.8] }
@@ -161,10 +161,10 @@ export function AgentActivityFeed({ events, isGenerating, className }: AgentActi
                     className={cn(
                       "rounded-lg border px-3 py-2 text-xs",
                       event.type === "revision"
-                        ? "border-amber-500/40 bg-amber-500/10 text-amber-100"
+                        ? "border-amber-200 bg-amber-50 text-amber-900"
                         : event.type === "error"
-                          ? "border-red-500/40 bg-red-500/10 text-red-100"
-                          : "border-slate-700/60 bg-slate-900/50 text-slate-300"
+                          ? "border-red-200 bg-red-50 text-red-800"
+                          : "border-slate-200 bg-slate-50 text-slate-700"
                     )}
                   >
                     <span className="font-mono-accent text-[10px] text-slate-500">

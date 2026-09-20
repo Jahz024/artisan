@@ -14,8 +14,9 @@ export type StoredPlanPreferences = UserPreferences & {
 };
 
 const DEFAULT_PREFERENCES: UserPreferences = {
+  targetGraduation: { year: 2027, termType: "fall", label: "Fall 2027" },
   creditLoadMin: 12,
-  creditLoadMax: 12,
+  creditLoadMax: 19,
   allowSummer: false,
   timePreferences: {
     preferEvening: false,

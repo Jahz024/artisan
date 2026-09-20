@@ -110,20 +110,20 @@ export function TreeNode({
         className={cn(
           "relative flex shrink-0 items-center justify-center rounded-full transition-shadow duration-200",
           node.status === "in_progress" && "animate-tree-node-live",
-          highlighted && "shadow-[0_0_16px_rgba(16,185,129,0.55)]",
-          selected && "ring-[3px] ring-[#FF6600] shadow-[0_0_18px_rgba(255,102,0,0.55)]",
-          suggestionHighlight && "ring-2 ring-violet-400/80 shadow-[0_0_14px_rgba(167,139,250,0.5)]",
-          flashError && "ring-[3px] ring-red-500 shadow-[0_0_20px_rgba(239,68,68,0.75)]"
+          highlighted && "ring-2 ring-emerald-400/60 shadow-md",
+          selected && "ring-[3px] ring-[#E87722] shadow-md",
+          suggestionHighlight && "ring-2 ring-violet-400/70 shadow-sm",
+          flashError && "ring-[3px] ring-red-500 shadow-md"
         )}
         style={{
           width: diameter,
           height: diameter,
-          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), transparent 45%), ${nodeFillForStatus(node.status)}`,
+          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55), transparent 50%), ${nodeFillForStatus(node.status)}`,
           border: `2px solid ${nodeStrokeForStatus(node.status)}`,
         }}
       >
         {showWarningBadge ? (
-          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white shadow-[var(--glow-red)]">
+          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white shadow-sm">
             <AlertTriangle className="h-2.5 w-2.5" />
           </span>
         ) : null}
@@ -132,14 +132,14 @@ export function TreeNode({
       <div className="flex min-w-0 flex-col">
         <span
           className={cn(
-            "whitespace-nowrap font-mono-accent text-xs font-bold leading-none text-white",
-            dimmed && "text-slate-500"
+            "whitespace-nowrap font-mono-accent text-xs font-bold leading-none text-slate-900",
+            dimmed && "text-slate-400"
           )}
         >
           {formatCourseCode(node.courseId)}
         </span>
         {localHover ? (
-          <span className="mt-0.5 max-w-[140px] truncate text-[10px] leading-tight text-slate-400">
+          <span className="mt-0.5 max-w-[140px] truncate text-[10px] leading-tight text-slate-600">
             {title}
           </span>
         ) : null}

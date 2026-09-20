@@ -9,7 +9,7 @@ export const semesterTermSchema = z.object({
 export const userPreferencesSchema = z.object({
   targetGraduation: semesterTermSchema.optional(),
   creditLoadMin: z.number().min(0).default(12),
-  creditLoadMax: z.number().min(0).default(12),
+  creditLoadMax: z.number().min(0).default(19),
   allowSummer: z.boolean().default(false),
   timePreferences: z
     .object({

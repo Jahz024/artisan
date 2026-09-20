@@ -6,12 +6,12 @@ import type { CourseStatus } from "@/types/contracts";
 type BadgeVariant = CourseStatus | "warning" | "neutral";
 
 const styles: Record<BadgeVariant, string> = {
-  completed: "bg-emerald-500/15 text-emerald-300 border-emerald-400/40",
-  in_progress: "bg-amber-500/15 text-amber-200 border-amber-400/40 animate-pulse-glow",
-  planned_next: "bg-cyan-500/25 text-cyan-100 border-cyan-400/50 shadow-[var(--glow-cyan)]",
-  planned_future: "bg-cyan-500/10 text-cyan-200/80 border-cyan-500/25",
-  warning: "bg-red-500/15 text-red-200 border-red-400/40",
-  neutral: "bg-slate-500/15 text-slate-300 border-slate-500/30",
+  completed: "bg-slate-100 text-slate-600 border-slate-200",
+  in_progress: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  planned_next: "bg-orange-50 text-[#C4621A] border-orange-200",
+  planned_future: "bg-amber-50 text-amber-800 border-amber-200",
+  warning: "bg-red-50 text-red-700 border-red-200",
+  neutral: "bg-slate-50 text-slate-600 border-slate-200",
 };
 
 const labels: Record<BadgeVariant, string> = {

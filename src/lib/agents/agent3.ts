@@ -2,7 +2,8 @@
  * Agent 3 — Plan Architect
  * 
  * Builds semester-by-semester plan satisfying all constraints.
- * Uses a greedy scheduling algorithm with scoring.
+ * Uses greedy scheduling as a baseline, then asks the LLM to review and optimize
+ * the plan for balance, difficulty distribution, and graduation timing.
  */
 
 import type {
@@ -19,6 +20,7 @@ import type {
   ConfidenceLevel,
 } from "@/types/contracts";
 import { v4 as uuid } from "uuid";
+import { chatJSON } from "@/lib/llm";
 
 const GRADUATION_CREDITS = 120;
 
@@ -218,7 +220,8 @@ function fillElectivesToGraduation(
   reqPkg: RequirementsPackage,
   prefs: UserPreferences,
   assignedPerSem: Map<string, SemAssignment>,
-  courseToSemester: Map<string, SemesterTerm>
+  courseToSemester: Map<string, SemesterTerm>,
+  firstPlannableSemIdx = 1
 ): void {
   const scheduled = new Set([
     ...reqPkg.completedCourses.map((c) => c.courseId),
@@ -238,7 +241,7 @@ function fillElectivesToGraduation(
       prefs,
       assignedPerSem,
       courseToSemester,
-      0
+      firstPlannableSemIdx
     );
     if (!result.placed) continue;
     if (result.warning) placementWarnings.set(courseId, result.warning);
@@ -302,7 +305,15 @@ export async function runAgent3(
 
   // Build semester plan
   const currentTerm = reqPkg.currentTerm;
-  const semesters: SemesterTerm[] = generateTermSequence(currentTerm, 10, prefs.allowSummer);
+  // Generate only enough semesters to reach a 4-year graduation from first enrolled term.
+  // For a student starting Fall 2023 with current term Fall 2026, that's Fall 2027 target.
+  // Calculate how many semesters we actually need (typically 3-4 from current term).
+  const targetGradYear = prefs.targetGraduation?.year ?? (currentTerm.year + 1);
+  const targetGradTermType = prefs.targetGraduation?.termType ?? "fall";
+  const targetGradTermOrd = targetGradYear * 3 + ({ fall: 0, spring: 1, summer: 2 }[targetGradTermType] ?? 0);
+  const currentTermOrd = currentTerm.year * 3 + ({ fall: 0, spring: 1, summer: 2 }[currentTerm.termType] ?? 0);
+  const semCount = Math.max(4, Math.min(10, targetGradTermOrd - currentTermOrd + 1));
+  const semesters: SemesterTerm[] = generateTermSequence(currentTerm, semCount, prefs.allowSummer);
   const courseToSemester: Map<string, SemesterTerm> = new Map();
   const assignedPerSem: Map<string, SemAssignment> = new Map();
 
@@ -325,6 +336,8 @@ export async function runAgent3(
   }
 
   // Greedy assignment — never exceed creditLoadMax; extend semesters when needed
+  // Start from index 1 to skip the current semester (student is already enrolled)
+  const firstPlannableSemIdx = 1;
   for (const courseId of sorted) {
     if (!reqPkg.courseDetails[courseId]) continue;
     const result = scheduleCourse(
@@ -334,7 +347,7 @@ export async function runAgent3(
       prefs,
       assignedPerSem,
       courseToSemester,
-      0
+      firstPlannableSemIdx
     );
     if (result.warning) placementWarnings.set(courseId, result.warning);
   }
@@ -346,8 +359,132 @@ export async function runAgent3(
     reqPkg,
     prefs,
     assignedPerSem,
-    courseToSemester
+    courseToSemester,
+    firstPlannableSemIdx
   );
+
+  // ─── LLM: Review and optimize the greedy schedule ─────────────────────
+  onProgress("Asking AI to review and optimize the schedule…", 50);
+
+  const greedyPlan: Record<string, string[]> = {};
+  for (const [courseId, sem] of courseToSemester.entries()) {
+    if (completedIds.has(courseId) || inProgressIds.has(courseId)) continue;
+    const key = sem.label;
+    if (!greedyPlan[key]) greedyPlan[key] = [];
+    greedyPlan[key].push(courseId);
+  }
+
+  const courseInfoList = remainingCourses.map((id) => {
+    const c = reqPkg.courseDetails[id];
+    const rigor = expPkg.courseRigorSummaries[id];
+    return `${id} (${c?.credits ?? 3}cr, difficulty ${rigor?.averageDifficulty?.toFixed(1) ?? "?"}/5)`;
+  }).join(", ");
+
+  const prereqRules = Object.entries(reqPkg.prerequisiteGraph)
+    .filter(([cid, deps]) => deps.length > 0 && remainingCourses.includes(cid))
+    .map(([cid, deps]) => `${cid} requires: ${deps.join(", ")}`)
+    .join("\n");
+
+  const semesterSlots = semesters
+    .filter((_, i) => i >= firstPlannableSemIdx)
+    .map((s) => s.label)
+    .join(", ");
+
+  interface LLMSchedule {
+    schedule: Record<string, string[]>;
+    reasoning: string;
+  }
+
+  const llmSchedule = await chatJSON<LLMSchedule>(
+    `You are an expert academic schedule optimizer for Virginia Tech CS students. 
+Given a set of courses, prerequisites, and semester slots, produce the OPTIMAL schedule.
+
+RULES:
+- Each semester can have at most ${prefs.creditLoadMax} credits
+- All prerequisites must be completed in an earlier semester (not the same)
+- Target graduation: ${prefs.targetGraduation?.label ?? "as soon as possible"}
+- Balance difficulty across semesters — don't stack all hard courses together
+- Consider course difficulty ratings when distributing
+- Minimize total semesters needed
+
+Return JSON with:
+- schedule: object mapping semester label → array of course IDs
+- reasoning: one paragraph explaining your scheduling decisions`,
+    `Courses to schedule: ${courseInfoList}
+
+Available semesters (in order): ${semesterSlots}
+
+Prerequisites:
+${prereqRules || "None"}
+
+AI insights from transcript analysis:
+${reqPkg.llmAnalysis?.insights?.join(". ") ?? "None available"}
+
+Professor pairing tips:
+${expPkg.llmProfInsights?.difficultyPairings?.join(". ") ?? "None available"}
+
+Current greedy schedule for reference:
+${JSON.stringify(greedyPlan, null, 2)}`,
+    { schedule: greedyPlan, reasoning: "Using greedy schedule (LLM unavailable)." }
+  );
+
+  // Apply the LLM-optimized schedule if it returned valid data
+  const llmHasSchedule = Object.keys(llmSchedule.schedule).length > 0;
+  if (llmHasSchedule) {
+    onProgress("Applying AI-optimized schedule…", 55);
+
+    // Build a semester-label-to-term map
+    const labelToTerm = new Map<string, SemesterTerm>();
+    for (const sem of semesters) labelToTerm.set(sem.label, sem);
+
+    // Re-assign courses based on LLM schedule
+    const llmPlacedCourses = new Set<string>();
+    for (const [semLabel, courses] of Object.entries(llmSchedule.schedule)) {
+      const sem = labelToTerm.get(semLabel);
+      if (!sem) continue;
+      for (const courseId of courses) {
+        if (!reqPkg.courseDetails[courseId]) continue;
+        if (completedIds.has(courseId) || inProgressIds.has(courseId)) continue;
+        // Verify prerequisites are met in the LLM schedule
+        const prereqs = reqPkg.prerequisiteGraph[courseId] ?? [];
+        const prereqsMet = prereqs.every((p) => {
+          const pSem = courseToSemester.get(p);
+          // Also check the LLM schedule itself
+          if (!pSem) return completedIds.has(p) || inProgressIds.has(p);
+          return compareSemesters(pSem, sem) < 0;
+        });
+        if (!prereqsMet) continue;
+
+        // Check credit limit
+        const key = semKey(sem);
+        const semData = assignedPerSem.get(key) ?? { credits: 0, courses: [] };
+        const courseCr = courseCredits(reqPkg, courseId);
+        // Only apply if within limits (allow some flex since LLM may have re-distributed)
+        if (semData.credits + courseCr <= prefs.creditLoadMax + 1) {
+          // Remove from old assignment if exists
+          const oldSem = courseToSemester.get(courseId);
+          if (oldSem) {
+            const oldKey = semKey(oldSem);
+            const oldData = assignedPerSem.get(oldKey);
+            if (oldData) {
+              oldData.credits -= courseCr;
+              oldData.courses = oldData.courses.filter((c) => c !== courseId);
+            }
+          }
+          courseToSemester.set(courseId, sem);
+          semData.credits += courseCr;
+          semData.courses.push(courseId);
+          assignedPerSem.set(key, semData);
+          llmPlacedCourses.add(courseId);
+        }
+      }
+    }
+
+    onProgress(
+      `AI optimized ${llmPlacedCourses.size} course placements. ${llmSchedule.reasoning.slice(0, 80)}…`,
+      58
+    );
+  }
 
   onProgress("Scoring sections and finding alternatives…", 60);
   await delay(700);
@@ -408,7 +545,9 @@ export async function runAgent3(
     const block = reqPkg.requirementBlocks.find((b) => b.eligibleCourses.includes(courseId));
     const placementWarning = placementWarnings.get(courseId);
 
-    const isNextSem = sem.year === currentTerm.year && sem.termType === currentTerm.termType;
+    // The next plannable semester is the one right after currentTerm
+    const nextSem = semesters[firstPlannableSemIdx];
+    const isNextSem = nextSem && sem.year === nextSem.year && sem.termType === nextSem.termType;
     const status = isNextSem ? "planned_next" as const : "planned_future" as const;
 
     // Find best section for next semester

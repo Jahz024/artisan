@@ -29,28 +29,201 @@ function detectCreditType(line: string): CompletedCourse["creditType"] {
   return "standard";
 }
 
-export function getDemoTranscript(): TranscriptParseResult {
-  const completedCourses: CompletedCourse[] = [
-    termCourse("MATH", "1225", "A", 4, "Fall 2023"),
-    termCourse("ENGL", "1105", "A-", 3, "Fall 2023"),
-    termCourse("CS", "1114", "A", 3, "Fall 2023"),
-    termCourse("MATH", "1226", "B+", 4, "Spring 2024"),
-    termCourse("CS", "2114", "A-", 3, "Spring 2024"),
-    termCourse("ENGE", "1215", "B", 2, "Spring 2024"),
-    termCourse("STAT", "4604", "B+", 3, "Fall 2024", "ap"),
-    termCourse("CS", "2505", "A", 3, "Fall 2024"),
-    termCourse("CS", "2506", "A-", 3, "Fall 2024"),
-    termCourse("MATH", "2534", "B", 3, "Spring 2025"),
-    termCourse("CS", "3114", "B+", 3, "Spring 2025"),
-    termCourse("CS", "3214", "A-", 3, "Spring 2025"),
-  ];
+export interface DemoPreset {
+  id: string;
+  label: string;
+  emoji: string;
+  description: string;
+  major: string;
+  year: "freshman" | "sophomore" | "junior";
+  targetGrad: { year: number; termType: "spring" | "fall"; label: string };
+}
 
+export const DEMO_PRESETS: DemoPreset[] = [
+  { id: "cs-freshman", label: "CS Freshman", emoji: "💻", description: "Brand new, AP Calc credit", major: "Computer Science", year: "freshman", targetGrad: { year: 2030, termType: "spring", label: "Spring 2030" } },
+  { id: "cs-sophomore", label: "CS Sophomore", emoji: "📚", description: "Finished core math & intro CS", major: "Computer Science", year: "sophomore", targetGrad: { year: 2029, termType: "spring", label: "Spring 2029" } },
+  { id: "cs-junior", label: "CS Junior", emoji: "🎓", description: "Deep in systems & algorithms", major: "Computer Science", year: "junior", targetGrad: { year: 2028, termType: "spring", label: "Spring 2028" } },
+  { id: "cyber-sophomore", label: "Cybersecurity Soph", emoji: "🔐", description: "Security-focused, strong math", major: "Computer Science — Secure Computing", year: "sophomore", targetGrad: { year: 2029, termType: "spring", label: "Spring 2029" } },
+  { id: "ds-junior", label: "Data Science Junior", emoji: "📊", description: "Stats + ML track, minor in Math", major: "Computer Science — Data Analytics", year: "junior", targetGrad: { year: 2028, termType: "spring", label: "Spring 2028" } },
+  { id: "eng-freshman", label: "Gen. Engineering", emoji: "⚙️", description: "Undecided engineering, physics heavy", major: "General Engineering", year: "freshman", targetGrad: { year: 2030, termType: "spring", label: "Spring 2030" } },
+];
+
+export type DemoProfile = string; // preset id
+
+export function getDemoTranscript(profileId: DemoProfile = "cs-junior"): TranscriptParseResult {
+  switch (profileId) {
+    case "cs-freshman": return buildDemoCSFreshman();
+    case "cs-sophomore": return buildDemoCSSoph();
+    case "cs-junior": return buildDemoCSJunior();
+    case "cyber-sophomore": return buildDemoCyberSoph();
+    case "ds-junior": return buildDemoDSJunior();
+    case "eng-freshman": return buildDemoEngFreshman();
+    default: return buildDemoCSJunior();
+  }
+}
+
+function preset(id: string): DemoPreset {
+  return DEMO_PRESETS.find((p) => p.id === id)!;
+}
+
+/* ═══════════════ CS Freshman ═══════════════ */
+function buildDemoCSFreshman(): TranscriptParseResult {
+  const p = preset("cs-freshman");
   return {
-    completedCourses,
-    inProgressCourses: ["CS-3304", "CS-3704", "MATH-3034"],
-    major: "Computer Science",
+    completedCourses: [
+      termCourse("MATH", "1225", "A", 4, "Fall 2026", "ap"),
+    ],
+    inProgressCourses: ["CS-1114", "ENGL-1105", "MATH-1226"],
+    major: p.major,
     minors: [],
-    catalogYear: "2023-2024",
+    catalogYear: "2026-2027",
+    usedDemoFallback: true,
+  };
+}
+
+/* ═══════════════ CS Sophomore ═══════════════ */
+function buildDemoCSSoph(): TranscriptParseResult {
+  const p = preset("cs-sophomore");
+  return {
+    completedCourses: [
+      termCourse("MATH", "1225", "A", 4, "Fall 2025"),
+      termCourse("ENGL", "1105", "A-", 3, "Fall 2025"),
+      termCourse("CS", "1114", "A", 3, "Fall 2025"),
+      termCourse("PHYS", "2305", "B+", 4, "Fall 2025"),
+      termCourse("COMM", "1016", "A", 3, "Fall 2025"),
+      termCourse("MATH", "1226", "B+", 4, "Spring 2026"),
+      termCourse("CS", "2114", "A-", 3, "Spring 2026"),
+      termCourse("ENGL", "1106", "B", 3, "Spring 2026"),
+      termCourse("PHYS", "2306", "B", 4, "Spring 2026"),
+      termCourse("ENGE", "1215", "A", 2, "Spring 2026"),
+    ],
+    inProgressCourses: ["CS-2505", "MATH-2534", "STAT-4705"],
+    major: p.major,
+    minors: [],
+    catalogYear: "2025-2026",
+    usedDemoFallback: true,
+  };
+}
+
+/* ═══════════════ CS Junior ═══════════════ */
+function buildDemoCSJunior(): TranscriptParseResult {
+  const p = preset("cs-junior");
+  return {
+    completedCourses: [
+      // Fall 2024 — 17cr
+      termCourse("MATH", "1225", "A", 4, "Fall 2024"),
+      termCourse("ENGL", "1105", "A-", 3, "Fall 2024"),
+      termCourse("CS", "1114", "A", 3, "Fall 2024"),
+      termCourse("PHYS", "2305", "B+", 4, "Fall 2024"),
+      termCourse("COMM", "1016", "A", 3, "Fall 2024"),
+      // Spring 2025 — 19cr
+      termCourse("MATH", "1226", "B+", 4, "Spring 2025"),
+      termCourse("CS", "2114", "A-", 3, "Spring 2025"),
+      termCourse("ENGL", "1106", "B", 3, "Spring 2025"),
+      termCourse("PHYS", "2306", "B", 4, "Spring 2025"),
+      termCourse("ENGE", "1215", "A", 2, "Spring 2025"),
+      termCourse("PSYC", "2004", "A-", 3, "Spring 2025", "ap"),
+      // Fall 2025 — 18cr
+      termCourse("CS", "2505", "A", 3, "Fall 2025"),
+      termCourse("MATH", "2534", "B", 3, "Fall 2025"),
+      termCourse("MATH", "2114", "B+", 3, "Fall 2025"),
+      termCourse("STAT", "4604", "B+", 3, "Fall 2025", "ap"),
+      termCourse("SOC", "1004", "A-", 3, "Fall 2025"),
+      termCourse("ART", "1014", "A", 3, "Fall 2025"),
+      // Spring 2026 — 18cr
+      termCourse("CS", "2506", "A-", 3, "Spring 2026"),
+      termCourse("CS", "3114", "B+", 3, "Spring 2026"),
+      termCourse("MATH", "2204", "B", 3, "Spring 2026"),
+      termCourse("GEO", "1004", "A", 3, "Spring 2026"),
+      termCourse("FL", "2104", "B+", 3, "Spring 2026"),
+      termCourse("PHIL", "2014", "A-", 3, "Spring 2026"),
+    ],
+    inProgressCourses: ["CS-3214", "CS-3304", "STAT-4705"],
+    major: p.major,
+    minors: [],
+    catalogYear: "2024-2025",
+    usedDemoFallback: true,
+  };
+}
+
+/* ═══════════════ Cybersecurity Sophomore ═══════════════ */
+function buildDemoCyberSoph(): TranscriptParseResult {
+  const p = preset("cyber-sophomore");
+  return {
+    completedCourses: [
+      termCourse("MATH", "1225", "A-", 4, "Fall 2025"),
+      termCourse("CS", "1114", "B+", 3, "Fall 2025"),
+      termCourse("ENGL", "1105", "A", 3, "Fall 2025"),
+      termCourse("PHYS", "2305", "B", 4, "Fall 2025"),
+      termCourse("PSCI", "1014", "A", 3, "Fall 2025"),
+      termCourse("MATH", "1226", "A-", 4, "Spring 2026"),
+      termCourse("CS", "2114", "A", 3, "Spring 2026"),
+      termCourse("MATH", "2534", "B+", 3, "Spring 2026"),
+      termCourse("ENGL", "1106", "B+", 3, "Spring 2026"),
+      termCourse("ENGE", "1215", "B+", 2, "Spring 2026"),
+    ],
+    inProgressCourses: ["CS-2505", "STAT-4705", "PHYS-2306"],
+    major: p.major,
+    minors: [],
+    catalogYear: "2025-2026",
+    usedDemoFallback: true,
+  };
+}
+
+/* ═══════════════ Data Science Junior ═══════════════ */
+function buildDemoDSJunior(): TranscriptParseResult {
+  const p = preset("ds-junior");
+  return {
+    completedCourses: [
+      // Fall 2024 — 17cr
+      termCourse("MATH", "1225", "A", 4, "Fall 2024"),
+      termCourse("CS", "1114", "A-", 3, "Fall 2024"),
+      termCourse("ENGL", "1105", "B+", 3, "Fall 2024"),
+      termCourse("CHEM", "1035", "B", 3, "Fall 2024"),
+      termCourse("CHEM", "1045", "A", 1, "Fall 2024"),
+      termCourse("COMM", "1016", "A", 3, "Fall 2024"),
+      // Spring 2025 — 18cr
+      termCourse("MATH", "1226", "A", 4, "Spring 2025"),
+      termCourse("CS", "2114", "B+", 3, "Spring 2025"),
+      termCourse("STAT", "4705", "A-", 3, "Spring 2025"),
+      termCourse("ENGL", "1106", "A-", 3, "Spring 2025"),
+      termCourse("ENGE", "1215", "A", 2, "Spring 2025"),
+      termCourse("SOC", "1004", "A", 3, "Spring 2025"),
+      // Fall 2025 — 18cr
+      termCourse("CS", "2505", "B+", 3, "Fall 2025"),
+      termCourse("MATH", "2534", "A-", 3, "Fall 2025"),
+      termCourse("MATH", "2114", "A", 3, "Fall 2025"),
+      termCourse("MATH", "2204", "B+", 3, "Fall 2025"),
+      termCourse("PSYC", "2004", "B+", 3, "Fall 2025"),
+      termCourse("ART", "1014", "A-", 3, "Fall 2025"),
+      // Spring 2026 — 18cr
+      termCourse("CS", "2506", "B+", 3, "Spring 2026"),
+      termCourse("CS", "3114", "A", 3, "Spring 2026"),
+      termCourse("STAT", "4714", "A-", 3, "Spring 2026"),
+      termCourse("GEO", "1004", "B+", 3, "Spring 2026"),
+      termCourse("PHIL", "2014", "A", 3, "Spring 2026"),
+      termCourse("FL", "2104", "B+", 3, "Spring 2026"),
+    ],
+    inProgressCourses: ["CS-3214", "CS-4604", "CS-3304"],
+    major: p.major,
+    minors: ["Mathematics"],
+    catalogYear: "2024-2025",
+    usedDemoFallback: true,
+  };
+}
+
+/* ═══════════════ General Engineering Freshman ═══════════════ */
+function buildDemoEngFreshman(): TranscriptParseResult {
+  const p = preset("eng-freshman");
+  return {
+    completedCourses: [
+      termCourse("MATH", "1225", "A-", 4, "Fall 2026", "ap"),
+      termCourse("PHYS", "2305", "B+", 4, "Fall 2026", "ap"),
+    ],
+    inProgressCourses: ["MATH-1226", "ENGL-1105", "CS-1114"],
+    major: p.major,
+    minors: [],
+    catalogYear: "2026-2027",
     usedDemoFallback: true,
   };
 }

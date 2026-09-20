@@ -24,7 +24,7 @@ function Stars({ rating }: { rating: number }) {
           key={i}
           className={cn(
             "h-3.5 w-3.5",
-            i < Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-slate-600"
+            i < Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-slate-300"
           )}
         />
       ))}
@@ -49,8 +49,8 @@ function OfferingGrid() {
           <div
             className={cn(
               "mx-auto mt-1 h-3 w-3 rounded-full",
-              pattern[t] === "usually" && "bg-cyan-400/80",
-              pattern[t] === "rarely" && "bg-slate-600",
+              pattern[t] === "usually" && "bg-emerald-400",
+              pattern[t] === "rarely" && "bg-slate-300",
               pattern[t] === "always" && "bg-emerald-400"
             )}
           />
@@ -78,7 +78,7 @@ export function CourseDetailPanel({
         <>
           <motion.button
             type="button"
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -90,18 +90,18 @@ export function CourseDetailPanel({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 260 }}
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-cyan-500/20 bg-slate-950/95 shadow-2xl"
+            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-slate-200 bg-white shadow-xl"
             aria-label="Course details"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-slate-800 p-5">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5">
               <div>
-                <p className="font-mono-accent text-sm text-cyan-300">
+                <p className="font-mono-accent text-sm text-[var(--vt-maroon)]">
                   {formatCourseCode(node.courseId)}
                 </p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-100">
+                <h2 className="mt-1 text-xl font-semibold text-slate-900">
                   {meta?.title ?? "Course details"}
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">{meta?.credits ?? 3} credits</p>
+                <p className="mt-1 text-sm text-slate-600">{meta?.credits ?? 3} credits</p>
               </div>
               <Button variant="ghost" type="button" aria-label="Close panel" onClick={onClose} className="!p-2">
                 <X className="h-5 w-5" />
@@ -122,13 +122,13 @@ export function CourseDetailPanel({
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Requirement
                 </h3>
-                <p className="mt-1 text-sm text-slate-200">{node.requirementBlockId}</p>
+                <p className="mt-1 text-sm text-slate-800">{node.requirementBlockId}</p>
               </section>
 
               <section className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-xs font-semibold uppercase text-slate-500">Instructor</h3>
-                  <p className="mt-1 text-sm text-slate-200">{node.instructor ?? "TBD"}</p>
+                  <p className="mt-1 text-sm text-slate-800">{node.instructor ?? "TBD"}</p>
                   <div className="mt-2 flex items-center gap-2">
                     <Stars rating={rmpRating} />
                     <span className="text-xs text-slate-400">{rmpRating.toFixed(1)} RMP</span>
@@ -136,13 +136,13 @@ export function CourseDetailPanel({
                 </div>
                 <div>
                   <h3 className="text-xs font-semibold uppercase text-slate-500">Would take again</h3>
-                  <p className="mt-1 text-2xl font-semibold text-emerald-300">{wouldTakeAgain}%</p>
+                  <p className="mt-1 text-2xl font-semibold text-emerald-600">{wouldTakeAgain}%</p>
                 </div>
               </section>
 
               <section>
                 <h3 className="text-xs font-semibold uppercase text-slate-500">Difficulty</h3>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-red-500"
                     style={{ width: `${(difficulty / 10) * 100}%` }}
@@ -152,7 +152,7 @@ export function CourseDetailPanel({
 
               <section>
                 <h3 className="text-xs font-semibold uppercase text-slate-500">Rigor summary</h3>
-                <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                <p className="mt-1 text-sm leading-relaxed text-slate-700">
                   Expect steady weekly projects with exams weighted toward theory. Office hours are well
                   attended — start problem sets early.
                 </p>
@@ -160,7 +160,7 @@ export function CourseDetailPanel({
 
               <section>
                 <h3 className="text-xs font-semibold uppercase text-slate-500">Section times</h3>
-                <p className="mt-1 text-sm text-slate-300">MWF 10:10–11:00 · McBryde 113</p>
+                <p className="mt-1 text-sm text-slate-700">MWF 10:10–11:00 · McBryde 113</p>
               </section>
 
               <section>
@@ -169,9 +169,9 @@ export function CourseDetailPanel({
               </section>
 
               {annotation ? (
-                <section className="rounded-xl border border-pink-500/30 bg-pink-500/10 p-3">
-                  <h3 className="text-xs font-semibold uppercase text-pink-300">Agent 4 note</h3>
-                  <p className="mt-1 text-sm text-pink-100/90">{annotation}</p>
+                <section className="rounded-xl border border-pink-200 bg-pink-50 p-3">
+                  <h3 className="text-xs font-semibold uppercase text-pink-700">Agent 4 note</h3>
+                  <p className="mt-1 text-sm text-pink-900">{annotation}</p>
                 </section>
               ) : null}
 
@@ -183,7 +183,7 @@ export function CourseDetailPanel({
                       <li key={i}>
                         <button
                           type="button"
-                          className="w-full rounded-lg border border-slate-700/60 p-2 text-left text-sm hover:border-cyan-500/40"
+                          className="w-full rounded-lg border border-slate-200 p-2 text-left text-sm hover:border-[var(--vt-orange)]/50 hover:bg-slate-50"
                           onClick={() =>
                             onSwapAlternative?.(
                               node,
@@ -192,7 +192,7 @@ export function CourseDetailPanel({
                             )
                           }
                         >
-                          <span className="font-mono-accent text-cyan-300">
+                          <span className="font-mono-accent text-[var(--vt-maroon)]">
                             {formatCourseCode(alt.courseId ?? node.courseId)}
                           </span>
                           <span className="ml-2 text-xs text-slate-500">Score {alt.score}</span>

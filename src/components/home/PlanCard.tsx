@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 
 const themeAccent: Record<string, string> = {
-  circuit_board: "from-cyan-500/20 to-cyan-900/10 border-cyan-500/30",
-  constellation: "from-indigo-500/20 to-purple-900/10 border-indigo-500/30",
-  subway_map: "from-amber-500/15 to-orange-900/10 border-amber-500/30",
-  mountain_trail: "from-emerald-500/15 to-green-900/10 border-emerald-500/30",
-  watercolor_garden: "from-pink-500/15 to-rose-900/10 border-pink-500/30",
-  blueprint: "from-blue-500/15 to-slate-900/10 border-blue-500/30",
+  circuit_board: "border-l-4 border-l-slate-400",
+  constellation: "border-l-4 border-l-indigo-400",
+  subway_map: "border-l-4 border-l-[var(--vt-orange)]",
+  mountain_trail: "border-l-4 border-l-emerald-500",
+  watercolor_garden: "border-l-4 border-l-pink-400",
+  blueprint: "border-l-4 border-l-blue-500",
 };
 
 function statusBadge(status: PlanSummary["status"]) {
@@ -37,21 +37,23 @@ export function PlanCard({ plan, index }: PlanCardProps) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -2 }}
     >
-      <Link href={`/plan/${plan.id}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-xl">
+      <Link
+        href={`/plan/${plan.id}`}
+        className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vt-maroon)]/40"
+      >
         <Card
           glow="none"
           className={cn(
-            "relative overflow-hidden bg-gradient-to-br transition-shadow hover:shadow-[var(--glow-cyan)]",
+            "relative overflow-hidden transition-shadow hover:shadow-md",
             accent
           )}
         >
-          <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-cyan-400/10 blur-2xl" />
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="text-lg font-semibold text-slate-100">{plan.name}</h3>
-              <p className="mt-1 text-sm text-slate-400">{plan.major}</p>
+              <h3 className="text-lg font-semibold text-slate-900">{plan.name}</h3>
+              <p className="mt-1 text-sm text-slate-600">{plan.major}</p>
             </div>
             <Badge variant={statusBadge(plan.status)}>{plan.status}</Badge>
           </div>
@@ -61,11 +63,11 @@ export function PlanCard({ plan, index }: PlanCardProps) {
               {new Date(plan.updatedAt).toLocaleDateString()}
             </span>
             <span className="inline-flex items-center gap-1 capitalize">
-              <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+              <Sparkles className="h-3.5 w-3.5 text-[var(--vt-orange)]" />
               {String(plan.theme).replace("_", " ")}
             </span>
           </div>
-          <div className="mt-4 flex items-center gap-1 text-sm text-cyan-300">
+          <div className="mt-4 flex items-center gap-1 text-sm font-medium text-[var(--vt-maroon)]">
             Open plan
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </div>

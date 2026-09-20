@@ -32,12 +32,12 @@ const statusIcon = {
 };
 
 function confidenceGlow(confidence: PlanNode["confidence"], status: PlanNode["status"]) {
-  if (status === "completed") return "shadow-[var(--glow-green)]";
-  if (status === "in_progress") return "shadow-[var(--glow-amber)]";
-  if (status === "planned_next") return "shadow-[var(--glow-cyan)]";
-  if (confidence === "high") return "shadow-[var(--glow-cyan)]";
-  if (confidence === "medium") return "shadow-[0_0_10px_rgba(6,182,212,0.25)]";
-  return "opacity-90";
+  if (status === "completed") return "shadow-sm";
+  if (status === "in_progress") return "shadow-sm";
+  if (status === "planned_next") return "shadow-sm";
+  if (confidence === "high") return "shadow-sm";
+  if (confidence === "medium") return "shadow-sm";
+  return "opacity-95";
 }
 
 export function CourseNode({
@@ -88,16 +88,15 @@ export function CourseNode({
       }}
       transition={{ delay: index * 0.04, type: "spring", stiffness: 280, damping: 24 }}
       className={cn(
-        "group relative w-full cursor-grab rounded-xl border bg-slate-900/95 p-2.5 active:cursor-grabbing",
-        unconnected && "border-dashed border-slate-600/70",
-        !unconnected && node.status === "completed" && "cursor-default border-emerald-500/35",
-        !unconnected && node.status === "in_progress" && "border-amber-400/45",
-        !unconnected && node.status === "planned_next" && "border-cyan-400/55",
-        !unconnected && node.status === "planned_future" && "border-cyan-500/25",
+        "group relative w-full cursor-grab rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm active:cursor-grabbing",
+        unconnected && "border-dashed border-slate-300",
+        !unconnected && node.status === "completed" && "cursor-default border-slate-300",
+        !unconnected && node.status === "in_progress" && "border-emerald-300",
+        !unconnected && node.status === "planned_next" && "border-orange-300",
+        !unconnected && node.status === "planned_future" && "border-amber-200",
         confidenceGlow(node.confidence, node.status),
-        highlighted && "ring-2 ring-cyan-400/70 shadow-[0_0_20px_rgba(6,182,212,0.35)]",
-        suggestionHighlight &&
-          "ring-2 ring-violet-400/80 shadow-[0_0_18px_rgba(167,139,250,0.45)] animate-pulse",
+        highlighted && "ring-2 ring-emerald-400/50 shadow-md",
+        suggestionHighlight && "ring-2 ring-violet-400/60 shadow-md",
         selected && "ring-2 ring-[var(--vt-orange)]",
         isDragging && "z-50 opacity-80"
       )}
@@ -121,8 +120,8 @@ export function CourseNode({
       {showInPort ? (
         <span
           className={cn(
-            "pointer-events-none absolute left-0 top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-900 bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]",
-            highlighted && "scale-125 bg-cyan-300"
+            "pointer-events-none absolute left-0 top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-300 bg-emerald-500",
+            highlighted && "scale-125 bg-emerald-400"
           )}
           aria-hidden
         />
@@ -130,15 +129,15 @@ export function CourseNode({
       {showOutPort ? (
         <span
           className={cn(
-            "pointer-events-none absolute right-0 top-1/2 z-10 h-2 w-2 translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-900 bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]",
-            highlighted && "scale-125 bg-cyan-300"
+            "pointer-events-none absolute right-0 top-1/2 z-10 h-2 w-2 translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-300 bg-emerald-500",
+            highlighted && "scale-125 bg-emerald-400"
           )}
           aria-hidden
         />
       ) : null}
 
       <div className="flex items-start justify-between gap-1 pl-1 pr-1">
-        <span className="font-mono-accent text-xs font-semibold text-cyan-200">
+        <span className="font-mono-accent text-xs font-semibold text-slate-900">
           {formatCourseCode(node.courseId)}
         </span>
         <Icon
@@ -146,29 +145,29 @@ export function CourseNode({
             "h-3.5 w-3.5 shrink-0",
             node.status === "completed" && "text-emerald-400",
             node.status === "in_progress" && "animate-spin text-amber-400",
-            node.status === "planned_next" && "text-cyan-300",
-            node.status === "planned_future" && "text-cyan-500/70"
+            node.status === "planned_next" && "text-[var(--vt-orange)]",
+            node.status === "planned_future" && "text-amber-500"
           )}
         />
       </div>
-      <p className="mt-1 line-clamp-2 pl-1 pr-1 text-[11px] leading-snug text-slate-400">{title}</p>
+      <p className="mt-1 line-clamp-2 pl-1 pr-1 text-[11px] leading-snug text-slate-600">{title}</p>
       <div className="mt-2 flex items-center justify-between gap-1 pl-1 pr-1">
         <Badge variant={node.status} className="!text-[9px]" />
-        <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono-accent text-[10px] text-slate-300">
+        <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono-accent text-[10px] text-slate-700">
           {node.score}
         </span>
       </div>
       {node.warnings.length > 0 ? (
         <span
-          className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500/90 text-white shadow-[var(--glow-red)]"
+          className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow-sm"
           title={node.warnings[0]}
         >
           <AlertTriangle className="h-3 w-3" />
         </span>
       ) : null}
 
-      <div className="pointer-events-none absolute -bottom-10 left-1/2 z-20 hidden w-44 -translate-x-1/2 rounded-lg border border-slate-600 bg-slate-950/95 p-2 text-[10px] text-slate-300 shadow-xl group-hover:block group-focus-within:block">
-        <p className="font-medium text-slate-100">{title}</p>
+      <div className="pointer-events-none absolute -bottom-10 left-1/2 z-20 hidden w-44 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-2 text-[10px] text-slate-600 shadow-lg group-hover:block group-focus-within:block">
+        <p className="font-medium text-slate-900">{title}</p>
         <p className="mt-1 text-slate-500">
           {node.instructor ? `Prof. ${node.instructor}` : "Instructor TBD"}
         </p>

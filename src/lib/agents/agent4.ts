@@ -145,7 +145,17 @@ export async function runAgent4(
     })
   );
 
-  const heroMessage = `${plannedSemesters.length} semester${plannedSemesters.length !== 1 ? "s" : ""} to your ${reqPkg.major} degree — let's make ${plannedSemesters.length !== 1 ? "them" : "it"} count.`;
+  const defaultHero = `${plannedSemesters.length} semester${plannedSemesters.length !== 1 ? "s" : ""} to your ${reqPkg.major} degree — let's make ${plannedSemesters.length !== 1 ? "them" : "it"} count.`;
+
+  // ─── LLM: Generate personalized hero message and plan summary ─────────
+  onProgress("Using AI to generate personalized plan summary…", 92);
+
+  const { chatText } = await import("@/lib/llm");
+  const heroMessage = await chatText(
+    `You are a motivational academic advisor for Virginia Tech. Write a brief, encouraging one-liner (max 15 words) about a student's academic plan. Be specific to their situation. No emojis.`,
+    `Student: ${reqPkg.major} major. They have ${plannedSemesters.length} semesters left until graduation in ${planGraph.estimatedGraduation.label}. They've completed ${reqPkg.completedCourses.length} courses and have ${planGraph.nodes.filter((n) => n.status === "planned_next" || n.status === "planned_future").length} courses remaining.`,
+    defaultHero
+  );
 
   onProgress("Presentation strategy complete.", 100);
 

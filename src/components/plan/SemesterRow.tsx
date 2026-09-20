@@ -55,16 +55,16 @@ export function SemesterRow({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: rowIndex * 0.08 }}
       className={cn(
-        "relative rounded-xl border border-slate-700/40 bg-slate-900/30 px-4 py-3",
-        isOver && "border-cyan-400/50 bg-cyan-500/5 shadow-[var(--glow-cyan)]"
+        "relative rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm",
+        isOver && "border-[var(--vt-orange)]/50 bg-orange-50/50 shadow-md"
       )}
     >
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-cyan-400 shadow-[var(--glow-cyan)]" />
-          <h3 className="text-sm font-semibold text-slate-100">{semester.term.label}</h3>
+          <div className="h-2 w-2 rounded-full bg-[var(--vt-maroon)]" />
+          <h3 className="text-sm font-semibold text-slate-900">{semester.term.label}</h3>
         </div>
-        <span className="rounded-full border border-slate-600/60 bg-slate-800/80 px-2 py-0.5 text-xs text-slate-300">
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700">
           {semester.totalCredits} cr
         </span>
         {onSemesterCreditTarget ? (
