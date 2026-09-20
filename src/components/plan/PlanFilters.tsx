@@ -415,22 +415,39 @@ export function PlanFilters({
 
 export interface SemesterCourseListProps {
   planGraph: PlanGraph | null;
+  /** When true, only show major-required courses (not electives/pathways) */
+  requiredOnly?: boolean;
 }
 
-export function SemesterCourseList({ planGraph }: SemesterCourseListProps) {
+export function SemesterCourseList({ planGraph, requiredOnly }: SemesterCourseListProps) {
   const [expandedTerms, setExpandedTerms] = useState<Set<string>>(() => new Set());
 
   const semesterRows = useMemo(() => {
     if (!planGraph) return [];
     const nodeById = new Map(planGraph.nodes.map((n) => [n.id, n]));
-    return planGraph.semesters.map((sem) => {
-      const nodes = sem.nodeIds
-        .map((id) => nodeById.get(id))
-        .filter((n): n is PlanNode => Boolean(n));
-      const credits = sumSemesterCredits(nodes);
-      return { sem, nodes, credits, tk: termKey(sem.term) };
-    });
-  }, [planGraph]);
+    return planGraph.semesters
+      .map((sem) => {
+        let nodes = sem.nodeIds
+          .map((id) => nodeById.get(id))
+          .filter((n): n is PlanNode => Boolean(n));
+        if (requiredOnly) {
+          nodes = nodes.filter((n) => {
+            const id = n.requirementBlockId.toLowerCase();
+            return (
+              id.includes("core") ||
+              id.includes("major") ||
+              id.startsWith("cs-") ||
+              id.startsWith("math-") ||
+              id.startsWith("statistics") ||
+              id.startsWith("science")
+            );
+          });
+        }
+        const credits = sumSemesterCredits(nodes);
+        return { sem, nodes, credits, tk: termKey(sem.term) };
+      })
+      .filter((row) => row.nodes.length > 0);
+  }, [planGraph, requiredOnly]);
 
   useEffect(() => {
     if (semesterRows.length === 0) return;
@@ -457,7 +474,7 @@ export function SemesterCourseList({ planGraph }: SemesterCourseListProps) {
     <section className="mt-6 rounded-2xl border border-slate-800/80 bg-white p-4 shadow-sm">
       <h3 className="flex items-center gap-2 text-sm font-bold text-slate-100">
         <ListTree className="h-4 w-4 text-[#861F41]" aria-hidden />
-        Semester course list
+        {requiredOnly ? "Required courses by semester" : "Semester course list"}
       </h3>
       <ul className="mt-3 space-y-2">
         {semesterRows.map(({ sem, nodes, credits, tk }) => {

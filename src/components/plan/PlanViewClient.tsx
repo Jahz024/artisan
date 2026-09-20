@@ -5,22 +5,38 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { GraduationCap, Loader2 } from "lucide-react";
-import type { AgentEvent, PlanGraph, PresentationSpec } from "@/types/contracts";
+import type {
+  AgentEvent,
+  ExperiencePackage,
+  PlanGraph,
+  PresentationSpec,
+  RequirementsPackage,
+} from "@/types/contracts";
 import type { PlanDetail } from "@/types/plan";
 import { GraduationProgress } from "@/components/plan/GraduationProgress";
-import { PlanVisualization } from "@/components/plan/PlanVisualization";
+import { SemesterExplorer } from "@/components/plan/SemesterExplorer";
+import { PrereqChainView } from "@/components/plan/PrereqChainView";
+import { SemesterCourseList, PlanFilters } from "@/components/plan/PlanFilters";
+import { WeeklyScheduleView } from "@/components/plan/WeeklyScheduleView";
 import { AgentActivityFeed } from "@/components/agents/AgentActivityFeed";
+import type { UserPreferences } from "@/types/contracts";
 import { Button } from "@/components/ui/Button";
 import { DEMO_PLAN_GRAPH, DEMO_PRESENTATION } from "@/lib/demo-plan";
 import { useAppSounds } from "@/lib/useAppSounds";
-import { usePlanBuild } from "@/lib/hooks/use-plan-build";
 import { useSoundSettings } from "@/components/providers/SoundProvider";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
+
+interface GenerateResult {
+  planGraph: PlanGraph;
+  presentationSpec: PresentationSpec;
+  requirementsPackage?: RequirementsPackage;
+  experiencePackage?: ExperiencePackage;
+}
 
 async function consumeGenerateStream(
   planId: string,
   onEvent: (event: AgentEvent) => void
-): Promise<{ planGraph: PlanGraph; presentationSpec: PresentationSpec } | null> {
+): Promise<GenerateResult | null> {
   const res = await fetch(`/api/plan/${planId}/generate`, { method: "POST" });
   if (!res.ok || !res.body) {
     const err = await res.json().catch(() => ({}));
@@ -30,7 +46,7 @@ async function consumeGenerateStream(
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let result: { planGraph: PlanGraph; presentationSpec: PresentationSpec } | null = null;
+  let result: GenerateResult | null = null;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -52,7 +68,7 @@ async function consumeGenerateStream(
         const payload = JSON.parse(dataLine) as unknown;
         if (eventName === "agent-event") onEvent(payload as AgentEvent);
         if (eventName === "complete") {
-          result = payload as { planGraph: PlanGraph; presentationSpec: PresentationSpec };
+          result = payload as GenerateResult;
         }
         if (eventName === "error") {
           const msg = (payload as { message?: string }).message ?? "Generation error";
@@ -76,12 +92,12 @@ export function PlanViewClient() {
   const [events, setEvents] = useState<AgentEvent[]>([]);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [creditSuggestionIds, setCreditSuggestionIds] = useState<Set<string>>(new Set());
-  /** The graph this session generated, replayed as a build before going live. */
-  const [freshGraph, setFreshGraph] = useState<PlanGraph | null>(null);
+  const [reqPkg, setReqPkg] = useState<RequirementsPackage | null>(null);
+  const [expPkg, setExpPkg] = useState<ExperiencePackage | null>(null);
+  const [draftPreferences, setDraftPreferences] = useState<UserPreferences | null>(null);
   const { play } = useAppSounds();
-  const { muted } = useSoundSettings();
-  const reducedMotion = usePrefersReducedMotion();
+  const { muted: _muted } = useSoundSettings();
+  const _reducedMotion = usePrefersReducedMotion();
 
   const loadPlan = useCallback(async () => {
     setLoading(true);
@@ -91,6 +107,8 @@ export function PlanViewClient() {
       if (!res.ok) throw new Error("Plan not found");
       const data = await res.json();
       setPlan(data.plan);
+      if (data.plan.requirementsPackage) setReqPkg(data.plan.requirementsPackage);
+      if (data.plan.experiencePackage) setExpPkg(data.plan.experiencePackage);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
@@ -101,6 +119,24 @@ export function PlanViewClient() {
   useEffect(() => {
     void loadPlan();
   }, [loadPlan]);
+
+  useEffect(() => {
+    if (plan) setDraftPreferences(plan.preferences);
+  }, [plan?.id]);
+
+  const handlePreferencesChange = useCallback(
+    async (next: UserPreferences) => {
+      setDraftPreferences(next);
+      setPlan((p) => (p ? { ...p, preferences: next } : p));
+      if (!plan) return;
+      await fetch(`/api/plan/${planId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferences: next }),
+      });
+    },
+    [plan, planId]
+  );
 
   const startGeneration = useCallback(async () => {
     setGenerating(true);
@@ -117,12 +153,14 @@ export function PlanViewClient() {
                 status: "ready",
                 planGraph: result.planGraph,
                 presentationSpec: result.presentationSpec,
+                requirementsPackage: result.requirementsPackage ?? null,
+                experiencePackage: result.experiencePackage ?? null,
               }
             : p
         );
-        // Hand the finished graph to the build choreographer. It plays the
-        // completion chime itself once the map has finished drawing.
-        setFreshGraph(result.planGraph);
+        if (result.requirementsPackage) setReqPkg(result.requirementsPackage);
+        if (result.experiencePackage) setExpPkg(result.experiencePackage);
+        play("generationComplete");
       }
       await loadPlan();
     } catch (e) {
@@ -142,14 +180,7 @@ export function PlanViewClient() {
   const graph = plan?.planGraph ?? (plan?.status === "draft" ? DEMO_PLAN_GRAPH : null);
   const spec = plan?.presentationSpec ?? DEMO_PRESENTATION;
   const usingDemoPreview = !plan?.planGraph && graph === DEMO_PLAN_GRAPH;
-
-  // Replay the build over the graph the agents just produced. The pipeline
-  // streams progress but not the graph, so the steps are queued and played at
-  // the reference pace once `complete` lands rather than being skipped.
-  const { build, isBuilding } = usePlanBuild(freshGraph, events, Boolean(freshGraph), {
-    muted,
-    reducedMotion,
-  });
+  const preferences = draftPreferences ?? plan?.preferences;
 
   const persistGraph = async (next: PlanGraph) => {
     setPlan((p) => (p ? { ...p, planGraph: next } : p));
@@ -157,34 +188,6 @@ export function PlanViewClient() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ planGraph: next }),
-    });
-  };
-
-  const handleSemesterCreditTarget = async (
-    tk: string,
-    targetCredits: number,
-    suggestionNodeIds: string[]
-  ) => {
-    setCreditSuggestionIds(new Set(suggestionNodeIds));
-    if (!plan) return;
-    const overrides = {
-      ...plan.preferences.semesterCreditOverrides,
-      [tk]: targetCredits,
-    };
-    setPlan((p) =>
-      p
-        ? {
-            ...p,
-            preferences: { ...p.preferences, semesterCreditOverrides: overrides },
-          }
-        : p
-    );
-    await fetch(`/api/plan/${planId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        preferences: { ...plan.preferences, semesterCreditOverrides: overrides },
-      }),
     });
   };
 
@@ -233,7 +236,7 @@ export function PlanViewClient() {
           className="mb-8 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/80 to-slate-950/90 p-6 glow-border-cyan"
         >
           <p className="font-mono-accent text-base font-bold text-[var(--ink-soft)]">
-            Circuit board view
+            Semester explorer
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-slate-50">
             {spec.heroMessage}
@@ -253,30 +256,60 @@ export function PlanViewClient() {
           {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
         </motion.section>
 
-        {/* The pipeline strip sits above the map it is drawing. */}
         <AgentActivityFeed
           events={events}
-          isGenerating={generating || isBuilding}
+          isGenerating={generating}
           className="mb-8"
         />
 
-        {graph ? <GraduationProgress planGraph={graph} /> : null}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          {/* Sidebar: Filters */}
+          <aside className="order-2 flex w-full shrink-0 flex-col gap-4 lg:order-1 lg:max-h-[calc(100vh-8rem)] lg:w-[340px] lg:overflow-y-auto lg:pr-1">
+            {preferences && graph ? (
+              <PlanFilters
+                planGraph={graph}
+                preferences={preferences}
+                onPreferencesChange={(next) => void handlePreferencesChange(next)}
+                onRegenerate={() => void startGeneration()}
+                regenerating={generating}
+              />
+            ) : null}
+          </aside>
 
-        {graph ? (
-          <PlanVisualization
-            planGraph={graph}
-            presentationSpec={spec}
-            onPlanChange={(g) => void persistGraph(g)}
-            semesterCreditOverrides={plan?.preferences.semesterCreditOverrides}
-            creditSuggestionIds={creditSuggestionIds}
-            onSemesterCreditTarget={(tk, target, ids) =>
-              void handleSemesterCreditTarget(tk, target, ids)
-            }
-            build={build}
-          />
-        ) : (
-          <p className="text-center text-slate-500">No plan graph yet.</p>
-        )}
+          {/* Main content */}
+          <div className="order-1 min-w-0 flex-1 lg:order-2">
+            {graph ? <GraduationProgress planGraph={graph} /> : null}
+
+            {graph && preferences ? (
+              <SemesterExplorer
+                planGraph={graph}
+                requirementsPackage={reqPkg}
+                experiencePackage={expPkg}
+                preferences={preferences}
+                onPlanChange={(g) => void persistGraph(g)}
+              />
+            ) : !graph ? (
+              <p className="text-center text-slate-500">No plan graph yet.</p>
+            ) : null}
+
+            {graph ? <PrereqChainView planGraph={graph} className="mt-8 hidden" /> : null}
+
+            {graph ? (
+              <SemesterCourseList planGraph={graph} requiredOnly />
+            ) : null}
+
+            {graph ? (
+              <SemesterCourseList planGraph={graph} optionalOnly />
+            ) : null}
+
+            {graph ? (
+              <WeeklyScheduleView
+                planGraph={graph}
+                requirementsPackage={reqPkg}
+              />
+            ) : null}
+          </div>
+        </div>
       </main>
     </div>
   );

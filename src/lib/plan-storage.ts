@@ -1,8 +1,10 @@
 import type {
   ArtDirection,
   CompletedCourse,
+  ExperiencePackage,
   PlanGraph,
   PresentationSpec,
+  RequirementsPackage,
   UserPreferences,
 } from "@/types/contracts";
 
@@ -87,4 +89,22 @@ export function isArtDirection(value: string): value is ArtDirection {
     "watercolor_garden",
     "blueprint",
   ].includes(value);
+}
+
+export function parseRequirementsPackage(raw: string): RequirementsPackage | null {
+  if (!raw || raw === "{}") return null;
+  try {
+    return JSON.parse(raw) as RequirementsPackage;
+  } catch {
+    return null;
+  }
+}
+
+export function parseExperiencePackage(raw: string): ExperiencePackage | null {
+  if (!raw || raw === "{}") return null;
+  try {
+    return JSON.parse(raw) as ExperiencePackage;
+  } catch {
+    return null;
+  }
 }

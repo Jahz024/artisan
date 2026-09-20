@@ -184,6 +184,8 @@ export async function runPipeline(
   return {
     planGraph,
     presentationSpec,
+    requirementsPackage,
+    experiencePackage,
     events,
     totalDurationMs: Date.now() - startTime,
   };

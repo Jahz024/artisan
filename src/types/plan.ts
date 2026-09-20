@@ -1,7 +1,9 @@
 import type {
   ArtDirection,
+  ExperiencePackage,
   PlanGraph,
   PresentationSpec,
+  RequirementsPackage,
   UserPreferences,
 } from "@/types/contracts";
 
@@ -26,4 +28,6 @@ export interface PlanDetail extends PlanSummary {
   };
   planGraph: PlanGraph | null;
   presentationSpec: PresentationSpec | null;
+  requirementsPackage?: RequirementsPackage | null;
+  experiencePackage?: ExperiencePackage | null;
 }

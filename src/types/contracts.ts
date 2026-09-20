@@ -308,6 +308,8 @@ export interface AgentEvent {
 export interface PipelineResult {
   planGraph: PlanGraph;
   presentationSpec: PresentationSpec;
+  requirementsPackage: RequirementsPackage;
+  experiencePackage: ExperiencePackage;
   events: AgentEvent[];
   totalDurationMs: number;
 }

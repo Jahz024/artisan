@@ -65,6 +65,8 @@ model Plan {
   planGraph        String   @default("{}") // JSON PlanGraph
   presentationSpec String   @default("{}") // JSON PresentationSpec
   theme            String   @default("constellation")
+  requirementsPkg  String   @default("{}") // JSON RequirementsPackage
+  experiencePkg    String   @default("{}") // JSON ExperiencePackage
   editHistory      String   @default("[]") // JSON array of edits
   status           String   @default("draft") // draft | generating | ready | error
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)

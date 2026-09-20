@@ -130,6 +130,8 @@ export async function POST(_req: Request, context: RouteContext) {
               status: "ready",
               planGraph: serializeJson(result.planGraph),
               presentationSpec: serializeJson(result.presentationSpec),
+              requirementsPkg: serializeJson(result.requirementsPackage),
+              experiencePkg: serializeJson(result.experiencePackage),
               theme: result.presentationSpec.suggestedArtDirection,
             },
           });
@@ -137,6 +139,8 @@ export async function POST(_req: Request, context: RouteContext) {
           send("complete", {
             planGraph: result.planGraph,
             presentationSpec: result.presentationSpec,
+            requirementsPackage: result.requirementsPackage,
+            experiencePackage: result.experiencePackage,
           });
         } catch (error) {
           const message =

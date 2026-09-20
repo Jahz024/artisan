@@ -3,9 +3,11 @@ import { requireUserId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   isArtDirection,
+  parseExperiencePackage,
   parseJsonArray,
   parsePlanGraph,
   parsePresentationSpec,
+  parseRequirementsPackage,
   parseStoredPreferences,
   serializeJson,
 } from "@/lib/plan-storage";
@@ -39,6 +41,8 @@ export async function GET(_req: Request, context: RouteContext) {
       preferences: parseStoredPreferences(plan.preferences),
       planGraph: parsePlanGraph(plan.planGraph),
       presentationSpec: parsePresentationSpec(plan.presentationSpec),
+      requirementsPackage: parseRequirementsPackage(plan.requirementsPkg),
+      experiencePackage: parseExperiencePackage(plan.experiencePkg),
       editHistory: parseJsonArray<unknown>(plan.editHistory, []),
     },
   });
