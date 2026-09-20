@@ -1,0 +1,1953 @@
+diff --git a/src/app/api/transcript/route.ts b/src/app/api/transcript/route.ts
+index fdff8eb..6b867ef 100644
+--- a/src/app/api/transcript/route.ts
++++ b/src/app/api/transcript/route.ts
+@@ -33,7 +33,7 @@ export async function POST(req: Request) {
+     return NextResponse.json({ error: "File must be a PDF" }, { status: 400 });
+   }
+ 
+-  const uploadDir = join(tmpdir(), "hokie-pathfinder-uploads");
++  const uploadDir = join(tmpdir(), "artemis-uploads");
+   await mkdir(uploadDir, { recursive: true });
+   const tempPath = join(uploadDir, `${randomUUID()}.pdf`);
+ 
+diff --git a/src/app/create/page.tsx b/src/app/create/page.tsx
+index 064e3a0..79822cc 100644
+--- a/src/app/create/page.tsx
++++ b/src/app/create/page.tsx
+@@ -5,8 +5,8 @@ export default function CreatePlanPage() {
+   return (
+     <div className="min-h-full bg-circuit-grid">
+       <div className="border-b border-slate-800/80 bg-slate-950/50 px-6 py-4">
+-        <Link href="/" className="text-sm font-semibold text-slate-200">
+-          Hokie <span className="text-cyan-400">Pathfinder</span>
++        <Link href="/" className="font-mono-accent text-xl font-extrabold text-[var(--ink)]">
++          Artemis
+         </Link>
+       </div>
+       <CreatePlanWizard />
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 250ea2f..248f484 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -1,20 +1,119 @@
+ @import "tailwindcss";
+ 
++/*
++ * Hokie Line — the degree plan as a transit map.
++ * Inspired by Harry Beck's 1933 London Underground diagram and Massimo
++ * Vignelli's 1972 New York subway map, printed on Hokie Stone paper in
++ * Virginia Tech maroon and burnt orange.
++ */
++
+ :root {
+-  --background: #0a0e17;
+-  --foreground: #e2e8f0;
+-  --surface: #111827;
+-  --surface-elevated: #1a2234;
+-  --accent-cyan: #06b6d4;
+-  --accent-amber: #f59e0b;
+-  --accent-green: #10b981;
+-  --accent-red: #ef4444;
+-  --vt-maroon: #861f41;
+-  --vt-orange: #e87511;
+-  --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.45);
+-  --glow-amber: 0 0 18px rgba(245, 158, 11, 0.4);
+-  --glow-green: 0 0 16px rgba(16, 185, 129, 0.35);
+-  --glow-red: 0 0 16px rgba(239, 68, 68, 0.4);
++  --paper: #e3e2de;          /* Hokie Stone limestone */
++  --paper-raised: #f5f4f1;   /* cards, panels */
++  --paper-sunk: #d6d4cf;     /* semester zone bands */
++  --ink: #1d1a24;            /* plum-black ink, pulled from maroon */
++  --ink-soft: #4a4553;
++  --maroon: #861f41;         /* VT Chicago Maroon */
++  --orange: #e5751f;         /* VT Burnt Orange */
++  --line-blue: #2f5da8;
++  --line-green: #2e8b57;
++  --line-yellow: #e0a400;
++  --line-teal: #127a86;
++  --danger: #c8322f;
++
++  /* Legacy names still referenced by components */
++  --background: var(--paper);
++  --foreground: var(--ink);
++  --surface: var(--paper-raised);
++  --surface-elevated: #fbfaf8;
++  --vt-maroon: var(--maroon);
++  --vt-orange: var(--orange);
++  --accent-cyan: var(--maroon);
++  --accent-amber: var(--orange);
++  --accent-green: var(--line-green);
++  --accent-red: var(--danger);
++  --glow-cyan: 0 0 0 3px rgba(134, 31, 65, 0.18);
++  --glow-amber: 0 0 0 3px rgba(229, 117, 31, 0.22);
++  --glow-green: 0 0 0 3px rgba(46, 139, 87, 0.2);
++  --glow-red: 0 0 0 3px rgba(200, 50, 47, 0.22);
++}
++
++/*
++ * Palette remap. Components were written against a dark slate/cyan theme;
++ * these scales are inverted so the same utility classes read correctly on
++ * paper: slate becomes ink-on-stone, cyan becomes maroon, amber becomes VT
++ * orange, and the status colors darken for contrast on a light ground.
++ */
++@theme {
++  --color-slate-50: #1d1a24;
++  --color-slate-100: #26222e;
++  --color-slate-200: #332e3b;
++  --color-slate-300: #45404d;
++  --color-slate-400: #56515e;
++  --color-slate-500: #625d69;
++  --color-slate-600: #8a8590;
++  --color-slate-700: #b2aeb4;
++  --color-slate-800: #cfccc8;
++  --color-slate-900: #f5f4f1;
++  --color-slate-950: #fbfaf8;
++
++  --color-cyan-50: #3b0a1c;
++  --color-cyan-100: #4e0f26;
++  --color-cyan-200: #63152f;
++  --color-cyan-300: #751b39;
++  --color-cyan-400: #861f41;
++  --color-cyan-500: #9a2a50;
++  --color-cyan-600: #b04a6c;
++  --color-cyan-700: #c97a94;
++  --color-cyan-800: #e2b5c3;
++  --color-cyan-900: #f1dae1;
++  --color-cyan-950: #f8edf1;
++
++  --color-amber-50: #4a2106;
++  --color-amber-100: #5c2a08;
++  --color-amber-200: #733509;
++  --color-amber-300: #8f420c;
++  --color-amber-400: #d0661a;
++  --color-amber-500: #e5751f;
++  --color-amber-600: #ec924f;
++  --color-amber-700: #f2b283;
++  --color-amber-800: #f7d2b5;
++  --color-amber-900: #fbe8d9;
++  --color-amber-950: #fdf4ec;
++
++  --color-emerald-50: #0e3b26;
++  --color-emerald-100: #124a30;
++  --color-emerald-200: #17593a;
++  --color-emerald-300: #1d6b45;
++  --color-emerald-400: #237f52;
++  --color-emerald-500: #2e8b57;
++  --color-emerald-600: #4fa274;
++  --color-emerald-700: #7dbe98;
++  --color-emerald-800: #b0d9c0;
++  --color-emerald-900: #d8ede0;
++  --color-emerald-950: #edf6f0;
++
++  --color-red-50: #4a0d0d;
++  --color-red-100: #5e1111;
++  --color-red-200: #761616;
++  --color-red-300: #8f1c1c;
++  --color-red-400: #b42525;
++  --color-red-500: #c8322f;
++  --color-red-600: #d65d5a;
++  --color-red-700: #e48e8b;
++  --color-red-800: #f0bdbb;
++  --color-red-900: #f8dfde;
++  --color-red-950: #fcf0ef;
++
++  /* Secondary hues used by agent badges and progress bars */
++  --color-violet-300: #2f5da8;
++  --color-violet-400: #2f5da8;
++  --color-violet-600: #2f5da8;
++  --color-purple-300: #2f5da8;
++  --color-pink-300: #127a86;
++  --color-pink-500: #127a86;
++  --color-pink-600: #127a86;
++  --color-blue-300: #861f41;
+ }
+ 
+ @theme inline {
+@@ -22,89 +121,92 @@
+   --color-foreground: var(--foreground);
+   --color-surface: var(--surface);
+   --color-surface-elevated: var(--surface-elevated);
+-  --color-accent: var(--accent-cyan);
++  --color-accent: var(--maroon);
+   --color-vt-maroon: var(--vt-maroon);
+   --color-vt-orange: var(--vt-orange);
+-  --font-sans: var(--font-inter);
+-  --font-mono: var(--font-jetbrains);
++  --color-ink: var(--ink);
++  --color-paper: var(--paper);
++  --font-sans: var(--font-barlow);
++  --font-display: var(--font-barlow-condensed);
++  --font-mono: var(--font-barlow-condensed);
+ }
+ 
+ html {
+-  color-scheme: dark;
++  color-scheme: light;
+ }
+ 
+ body {
+-  background: var(--background);
+-  color: var(--foreground);
+-  font-family: var(--font-inter), system-ui, sans-serif;
++  background: var(--paper);
++  color: var(--ink);
++  font-family: var(--font-barlow), "Helvetica Neue", Arial, sans-serif;
+   min-height: 100vh;
+ }
+ 
++h1,
++h2,
++h3 {
++  font-family: var(--font-barlow-condensed), var(--font-barlow), "Arial Narrow", sans-serif;
++  letter-spacing: -0.005em;
++}
++
++/* Station-sign type: condensed, tabular. Replaces the old monospace accent. */
+ .font-mono-accent {
+-  font-family: var(--font-jetbrains), ui-monospace, monospace;
++  font-family: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
++  font-variant-numeric: tabular-nums;
++  letter-spacing: 0.01em;
+ }
+ 
+-/* Circuit grid background */
++/* Page ground: flat stone. The old circuit grid class now just sets paper. */
+ .bg-circuit-grid {
+-  background-color: var(--background);
+-  background-image:
+-    linear-gradient(rgba(6, 182, 212, 0.04) 1px, transparent 1px),
+-    linear-gradient(90deg, rgba(6, 182, 212, 0.04) 1px, transparent 1px),
+-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 182, 212, 0.12), transparent);
+-  background-size: 48px 48px, 48px 48px, 100% 100%;
++  background-color: var(--paper);
+ }
+ 
++/* Panels are printed cards, not glass. */
+ .glass-panel {
+-  background: linear-gradient(
+-    145deg,
+-    rgba(17, 24, 39, 0.85),
+-    rgba(10, 14, 23, 0.75)
+-  );
+-  backdrop-filter: blur(12px);
+-  border: 1px solid rgba(6, 182, 212, 0.15);
+-  box-shadow:
+-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+-    0 8px 32px rgba(0, 0, 0, 0.4);
++  background: var(--paper-raised);
++  border: 1px solid rgba(29, 26, 36, 0.14);
++  box-shadow: 0 1px 0 rgba(29, 26, 36, 0.06);
+ }
+ 
+ .glow-border-cyan {
+-  box-shadow:
+-    inset 0 0 0 1px rgba(6, 182, 212, 0.35),
+-    var(--glow-cyan);
++  box-shadow: inset 0 0 0 2px var(--maroon);
+ }
+ 
++/* Headings no longer glow. */
+ .glow-text-cyan {
+-  text-shadow: 0 0 24px rgba(6, 182, 212, 0.5);
++  text-shadow: none;
+ }
+ 
++/* Active agent / in-progress indicator: an orange ring that breathes. */
+ @keyframes pulse-glow {
+   0%,
+   100% {
+-    opacity: 1;
+-    filter: drop-shadow(0 0 4px rgba(6, 182, 212, 0.6));
++    box-shadow: 0 0 0 0 rgba(229, 117, 31, 0.45);
+   }
+   50% {
+-    opacity: 0.85;
+-    filter: drop-shadow(0 0 12px rgba(6, 182, 212, 0.9));
++    box-shadow: 0 0 0 5px rgba(229, 117, 31, 0);
+   }
+ }
+ 
+ .animate-pulse-glow {
+-  animation: pulse-glow 2.5s ease-in-out infinite;
++  animation: pulse-glow 2s ease-out infinite;
+ }
+ 
++/* "Now boarding": the station you're currently taking pulses like a live train. */
+ @keyframes tree-node-live {
+-  0%,
+-  100% {
+-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
++  0% {
++    box-shadow: 0 0 0 0 rgba(229, 117, 31, 0.55);
+   }
+-  50% {
+-    box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.65);
++  70% {
++    box-shadow: 0 0 0 9px rgba(229, 117, 31, 0);
++  }
++  100% {
++    box-shadow: 0 0 0 0 rgba(229, 117, 31, 0);
+   }
+ }
+ 
+ .animate-tree-node-live {
+-  animation: tree-node-live 2s ease-in-out infinite;
++  animation: tree-node-live 1.8s ease-out infinite;
+ }
+ 
+ @keyframes trace-flow {
+@@ -118,10 +220,61 @@ body {
+   animation: trace-flow 1.2s linear infinite;
+ }
+ 
+-/* Custom scrollbar */
++/* One orchestrated moment: the hero line draws itself once on load. */
++@keyframes line-draw {
++  from {
++    stroke-dashoffset: var(--line-length, 1600);
++  }
++  to {
++    stroke-dashoffset: 0;
++  }
++}
++
++@keyframes station-pop {
++  0% {
++    transform: scale(0);
++  }
++  70% {
++    transform: scale(1.25);
++  }
++  100% {
++    transform: scale(1);
++  }
++}
++
++.hero-line {
++  stroke-dasharray: var(--line-length, 1600);
++  stroke-dashoffset: var(--line-length, 1600);
++  animation: line-draw 2.2s cubic-bezier(0.65, 0, 0.35, 1) forwards;
++}
++
++.hero-station {
++  transform-box: fill-box;
++  transform-origin: center;
++  transform: scale(0);
++  animation: station-pop 0.45s ease-out forwards;
++}
++
++@media (prefers-reduced-motion: reduce) {
++  .hero-line,
++  .hero-station,
++  .animate-pulse-glow,
++  .animate-tree-node-live,
++  .circuit-trace-animated {
++    animation: none;
++    stroke-dashoffset: 0;
++    transform: none;
++  }
++}
++
++:focus-visible {
++  outline: 2px solid var(--maroon);
++  outline-offset: 2px;
++}
++
+ * {
+   scrollbar-width: thin;
+-  scrollbar-color: rgba(6, 182, 212, 0.35) rgba(10, 14, 23, 0.8);
++  scrollbar-color: rgba(29, 26, 36, 0.35) transparent;
+ }
+ 
+ *::-webkit-scrollbar {
+@@ -130,19 +283,15 @@ body {
+ }
+ 
+ *::-webkit-scrollbar-track {
+-  background: rgba(10, 14, 23, 0.8);
++  background: transparent;
+ }
+ 
+ *::-webkit-scrollbar-thumb {
+-  background: rgba(6, 182, 212, 0.35);
++  background: rgba(29, 26, 36, 0.3);
+   border-radius: 999px;
+ }
+ 
+-*::-webkit-scrollbar-thumb:hover {
+-  background: rgba(6, 182, 212, 0.55);
+-}
+-
+ ::selection {
+-  background: rgba(134, 31, 65, 0.45);
+-  color: #fff;
++  background: rgba(229, 117, 31, 0.35);
++  color: var(--ink);
+ }
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 86e279d..3dd3a8b 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -1,22 +1,26 @@
+ import type { Metadata } from "next";
+-import { Inter, JetBrains_Mono } from "next/font/google";
++import { Barlow, Barlow_Condensed } from "next/font/google";
+ import "./globals.css";
+ import { AppProviders } from "@/components/providers/AppProviders";
+ 
+-const inter = Inter({
+-  variable: "--font-inter",
++// Barlow draws on highway and transit signage: legible at small sizes,
++// and the condensed cut reads like station names on a map.
++const barlow = Barlow({
++  variable: "--font-barlow",
+   subsets: ["latin"],
++  weight: ["400", "500", "600", "700"],
+   display: "swap",
+ });
+ 
+-const jetbrains = JetBrains_Mono({
+-  variable: "--font-jetbrains",
++const barlowCondensed = Barlow_Condensed({
++  variable: "--font-barlow-condensed",
+   subsets: ["latin"],
++  weight: ["500", "600", "700", "800"],
+   display: "swap",
+ });
+ 
+ export const metadata: Metadata = {
+-  title: "Hokie Pathfinder | Map Your Path to Graduation",
++  title: "Artemis | Map your route to graduation",
+   description:
+     "Virginia Tech academic planning with AI agents — visualize prerequisites, optimize schedules, and graduate with confidence.",
+   keywords: ["Virginia Tech", "Hokie", "degree planning", "CS", "academic planner"],
+@@ -26,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
+   return (
+     <html
+       lang="en"
+-      className={`${inter.variable} ${jetbrains.variable} h-full antialiased dark`}
++      className={`${barlow.variable} ${barlowCondensed.variable} h-full antialiased`}
+     >
+       <body className="min-h-full flex flex-col bg-background text-foreground">
+         <AppProviders>{children}</AppProviders>
+diff --git a/src/components/agents/AgentActivityFeed.tsx b/src/components/agents/AgentActivityFeed.tsx
+index 85d06dd..364ca2a 100644
+--- a/src/components/agents/AgentActivityFeed.tsx
++++ b/src/components/agents/AgentActivityFeed.tsx
+@@ -100,7 +100,7 @@ export function AgentActivityFeed({ events, isGenerating, className }: AgentActi
+           <Zap className="h-4 w-4 text-cyan-400" />
+           <span className="text-sm font-semibold text-slate-100">Agent pipeline</span>
+           {isGenerating ? (
+-            <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-[10px] uppercase tracking-wide text-cyan-300">
++            <span className="rounded-full bg-[var(--maroon)] px-2 py-0.5 font-mono-accent text-[12px] font-bold text-white">
+               Live
+             </span>
+           ) : null}
+diff --git a/src/components/agents/AgentAvatar.tsx b/src/components/agents/AgentAvatar.tsx
+index efde54c..239a592 100644
+--- a/src/components/agents/AgentAvatar.tsx
++++ b/src/components/agents/AgentAvatar.tsx
+@@ -11,32 +11,32 @@ const AGENT_META: Record<
+ > = {
+   agent1: {
+     label: "Requirements",
+-    color: "text-blue-300",
+-    glow: "shadow-[0_0_20px_rgba(59,130,246,0.5)]",
++    color: "text-[#861F41]",
++    glow: "",
+     Icon: Search,
+   },
+   agent2: {
+     label: "Experience",
+-    color: "text-purple-300",
+-    glow: "shadow-[0_0_20px_rgba(168,85,247,0.5)]",
++    color: "text-[#2F5DA8]",
++    glow: "",
+     Icon: Star,
+   },
+   agent3: {
+     label: "Scheduler",
+-    color: "text-emerald-300",
+-    glow: "shadow-[0_0_20px_rgba(16,185,129,0.45)]",
++    color: "text-[#2E8B57]",
++    glow: "",
+     Icon: Layout,
+   },
+   agent4: {
+     label: "Presentation",
+-    color: "text-pink-300",
+-    glow: "shadow-[0_0_20px_rgba(244,114,182,0.45)]",
++    color: "text-[#127A86]",
++    glow: "",
+     Icon: Palette,
+   },
+   verifier: {
+     label: "Verifier",
+-    color: "text-amber-300",
+-    glow: "shadow-[0_0_20px_rgba(245,158,11,0.45)]",
++    color: "text-[#C95F10]",
++    glow: "",
+     Icon: Shield,
+   },
+ };
+@@ -56,10 +56,10 @@ export function AgentAvatar({ agentId, active, completed, size = "md" }: AgentAv
+   return (
+     <motion.div
+       className={cn(
+-        "relative flex items-center justify-center rounded-xl border border-slate-600/50 bg-slate-900/80",
++        "relative flex items-center justify-center rounded-full border-[3px] border-[var(--ink)] bg-white",
+         dim,
+         active && meta.glow,
+-        active && "animate-pulse-glow border-cyan-400/40"
++        active && "animate-pulse-glow border-[var(--orange)]"
+       )}
+       animate={active ? { scale: [1, 1.05, 1] } : { scale: 1 }}
+       transition={{ repeat: active ? Infinity : 0, duration: 2 }}
+@@ -69,7 +69,7 @@ export function AgentAvatar({ agentId, active, completed, size = "md" }: AgentAv
+         <motion.span
+           initial={{ scale: 0 }}
+           animate={{ scale: 1 }}
+-          className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-slate-900"
++          className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--ink)] text-white"
+         >
+           <Check size={10} strokeWidth={3} />
+         </motion.span>
+diff --git a/src/components/home/CircuitBackground.tsx b/src/components/home/CircuitBackground.tsx
+deleted file mode 100644
+index ed3ce2c..0000000
+--- a/src/components/home/CircuitBackground.tsx
++++ /dev/null
+@@ -1,35 +0,0 @@
+-"use client";
+-
+-import { motion } from "framer-motion";
+-
+-export function CircuitBackground() {
+-  return (
+-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+-      <svg className="h-full w-full opacity-40" preserveAspectRatio="none">
+-        <defs>
+-          <linearGradient id="traceGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+-            <stop offset="0%" stopColor="#06B6D4" stopOpacity="0" />
+-            <stop offset="50%" stopColor="#06B6D4" stopOpacity="0.8" />
+-            <stop offset="100%" stopColor="#06B6D4" stopOpacity="0" />
+-          </linearGradient>
+-        </defs>
+-        {[...Array(8)].map((_, i) => (
+-          <motion.path
+-            key={i}
+-            d={`M ${-100 + i * 120} 0 L ${200 + i * 80} 400 L ${600 + i * 40} 800`}
+-            fill="none"
+-            stroke="url(#traceGrad)"
+-            strokeWidth="1"
+-            initial={{ pathLength: 0, opacity: 0.2 }}
+-            animate={{ pathLength: 1, opacity: [0.15, 0.45, 0.15] }}
+-            transition={{
+-              pathLength: { duration: 2 + i * 0.2, repeat: Infinity, repeatType: "reverse" },
+-              opacity: { duration: 3 + i * 0.3, repeat: Infinity },
+-            }}
+-          />
+-        ))}
+-      </svg>
+-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0A0E17]/50 to-[#0A0E17]" />
+-    </div>
+-  );
+-}
+diff --git a/src/components/home/HokieLineHero.tsx b/src/components/home/HokieLineHero.tsx
+new file mode 100644
+index 0000000..4014503
+--- /dev/null
++++ b/src/components/home/HokieLineHero.tsx
+@@ -0,0 +1,157 @@
++"use client";
++
++/**
++ * The landing page's one moment of motion: a degree drawn as a transit line.
++ * The maroon line runs the CS core; the orange line (math) transfers in at
++ * CS 3114. The lines draw once on load, then the stations pop in order.
++ */
++
++const MAROON_STOPS = [
++  { x: 60, label: "CS 1114", done: true },
++  { x: 250, label: "CS 2114", done: true },
++  { x: 460, label: "CS 3114", now: true },
++  { x: 680, label: "CS 3214" },
++  { x: 900, label: "Capstone" },
++];
++
++const ORANGE_STOPS = [
++  { x: 120, y: 205, label: "MATH 1225", done: true },
++  { x: 300, y: 205, label: "MATH 2534", done: true },
++];
++
++export function HokieLineHero() {
++  return (
++    <svg
++      viewBox="0 0 1200 280"
++      className="h-auto w-full"
++      role="img"
++      aria-label="Illustration: a degree drawn as a transit line, from CS 1114 to graduation"
++    >
++      {/* Orange line: math sequence transferring into the CS core */}
++      <path
++        className="hero-line"
++        pathLength={1000}
++        style={{ ["--line-length" as string]: 1000, animationDelay: "0.35s" }}
++        d="M 120 205 H 350 Q 362 205 370 197 L 442 125 Q 450 117 460 117"
++        fill="none"
++        stroke="var(--orange)"
++        strokeWidth={12}
++        strokeLinecap="round"
++        strokeLinejoin="round"
++      />
++      {/* Maroon line: the CS core, ending at graduation */}
++      <path
++        className="hero-line"
++        pathLength={1000}
++        style={{ ["--line-length" as string]: 1000 }}
++        d="M 60 117 H 1080"
++        fill="none"
++        stroke="var(--maroon)"
++        strokeWidth={12}
++        strokeLinecap="round"
++      />
++
++      {MAROON_STOPS.map((s, i) => (
++        <g key={s.label}>
++          <circle
++            className="hero-station"
++            style={{ animationDelay: `${0.5 + i * 0.22}s` }}
++            cx={s.x}
++            cy={117}
++            r={s.now ? 15 : 12}
++            fill={s.done ? "var(--ink)" : s.now ? "var(--orange)" : "#fff"}
++            stroke="var(--ink)"
++            strokeWidth={s.now ? 5 : 4}
++          />
++          <text
++            x={s.x}
++            y={84}
++            textAnchor="middle"
++            fill="var(--ink)"
++            className="hero-station"
++            style={{
++              animationDelay: `${0.5 + i * 0.22}s`,
++              fontFamily: "var(--font-barlow-condensed)",
++              fontWeight: 700,
++              fontSize: 22,
++            }}
++          >
++            {s.label}
++          </text>
++          {s.now ? (
++            <text
++              x={s.x}
++              y={160}
++              textAnchor="middle"
++              fill="var(--ink-soft)"
++              className="hero-station"
++              style={{ animationDelay: `${0.5 + i * 0.22}s`, fontSize: 15, fontWeight: 600 }}
++            >
++              You are here
++            </text>
++          ) : null}
++        </g>
++      ))}
++
++      {ORANGE_STOPS.map((s, i) => (
++        <g key={s.label}>
++          <circle
++            className="hero-station"
++            style={{ animationDelay: `${0.8 + i * 0.22}s` }}
++            cx={s.x}
++            cy={s.y}
++            r={11}
++            fill={s.done ? "var(--ink)" : "#fff"}
++            stroke="var(--ink)"
++            strokeWidth={4}
++          />
++          <text
++            x={s.x}
++            y={s.y + 38}
++            textAnchor="middle"
++            fill="var(--ink)"
++            className="hero-station"
++            style={{
++              animationDelay: `${0.8 + i * 0.22}s`,
++              fontFamily: "var(--font-barlow-condensed)",
++              fontWeight: 700,
++              fontSize: 20,
++            }}
++          >
++            {s.label}
++          </text>
++        </g>
++      ))}
++
++      {/* Terminus: graduation, drawn as an interchange station */}
++      <g className="hero-station" style={{ animationDelay: "1.9s" }}>
++        <rect
++          x={1080}
++          y={93}
++          width={48}
++          height={48}
++          rx={24}
++          fill="#fff"
++          stroke="var(--ink)"
++          strokeWidth={6}
++        />
++        <circle cx={1104} cy={117} r={9} fill="var(--maroon)" />
++      </g>
++      <text
++        x={1104}
++        y={78}
++        textAnchor="middle"
++        fill="var(--maroon)"
++        className="hero-station"
++        style={{
++          animationDelay: "1.9s",
++          fontFamily: "var(--font-barlow-condensed)",
++          fontWeight: 800,
++          fontSize: 26,
++        }}
++      >
++        Graduation
++      </text>
++    </svg>
++  );
++}
+diff --git a/src/components/home/HomeDashboard.tsx b/src/components/home/HomeDashboard.tsx
+index d058038..519e75a 100644
+--- a/src/components/home/HomeDashboard.tsx
++++ b/src/components/home/HomeDashboard.tsx
+@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
+ import { Plus, Volume2, VolumeX } from "lucide-react";
+ import type { Session } from "next-auth";
+ import type { PlanSummary } from "@/types/plan";
+-import { CircuitBackground } from "@/components/home/CircuitBackground";
++import { HokieLineHero } from "@/components/home/HokieLineHero";
+ import { PlanCard } from "@/components/home/PlanCard";
+ import { Button } from "@/components/ui/Button";
+ import { useSoundSettings } from "@/components/providers/SoundProvider";
+@@ -37,11 +37,15 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
+     <div className="relative flex min-h-full flex-1 flex-col bg-circuit-grid">
+       <header className="relative z-10 flex items-center justify-between px-6 py-5 lg:px-10">
+         <Link href="/" className="flex items-center gap-2">
+-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--vt-maroon)]/30 text-sm font-bold text-[var(--vt-orange)] ring-1 ring-[var(--vt-maroon)]/50">
+-            VT
++          {/* Roundel-style mark: an interchange station */}
++          <span
++            className="flex h-9 w-9 items-center justify-center rounded-full border-[5px] border-[var(--maroon)] bg-white"
++            aria-hidden
++          >
++            <span className="h-2.5 w-2.5 rounded-full bg-[var(--orange)]" />
+           </span>
+-          <span className="text-lg font-semibold tracking-tight text-slate-100">
+-            Hokie <span className="text-cyan-400">Pathfinder</span>
++          <span className="font-mono-accent text-2xl font-extrabold text-[var(--ink)]">
++            Artemis
+           </span>
+         </Link>
+         <div className="flex items-center gap-2">
+@@ -63,28 +67,31 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
+       </header>
+ 
+       {!session?.user ? (
+-        <main className="relative flex flex-1 flex-col items-center justify-center px-6 pb-24 pt-8 text-center">
+-          <CircuitBackground />
++        <main className="relative flex flex-1 flex-col justify-center px-6 pb-16 pt-6 lg:px-10">
+           <motion.div
+-            initial={{ opacity: 0, y: 24 }}
+-            animate={{ opacity: 1, y: 0 }}
+-            className="relative z-10 max-w-2xl"
++            initial={{ opacity: 0 }}
++            animate={{ opacity: 1 }}
++            transition={{ duration: 0.4 }}
++            className="relative z-10 mx-auto w-full max-w-6xl"
+           >
+-            <p className="font-mono-accent text-xs uppercase tracking-[0.3em] text-cyan-500/80">
+-              Virginia Tech · Degree planning
+-            </p>
+-            <h1 className="mt-4 text-4xl font-bold leading-tight text-slate-50 sm:text-5xl glow-text-cyan">
+-              Map your path to graduation
++            <h1 className="max-w-3xl text-5xl font-extrabold leading-[0.95] text-[var(--ink)] sm:text-7xl">
++              Map your route to graduation
+             </h1>
+-            <p className="mt-4 text-lg text-slate-400">
+-              Upload your transcript, set preferences, and watch five AI agents weave a glowing
+-              prerequisite map — optimized for professors, rigor, and your schedule.
++            <p className="mt-5 max-w-xl text-lg leading-relaxed text-[var(--ink-soft)]">
++              Upload your transcript and tell us how you like to learn. Five agents check VT
++              requirements, years of past timetables, and professor ratings, then draw your degree
++              as a map you can rearrange.
+             </p>
+-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
++
++            <div className="mt-10 -mx-2 sm:mx-0">
++              <HokieLineHero />
++            </div>
++
++            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+               <Button
+                 type="button"
+                 onClick={() => signIn("google", { callbackUrl: "/" })}
+-                className="min-w-[200px]"
++                className="min-w-[220px]"
+               >
+                 Sign in with Google
+               </Button>
+@@ -99,10 +106,12 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
+                   })
+                 }
+               >
+-                Demo login
++                Try the demo
+               </Button>
++              <p className="text-sm text-[var(--ink-soft)] sm:ml-2">
++                Demo account: demo@vt.edu / demo
++              </p>
+             </div>
+-            <p className="mt-4 text-xs text-slate-600">Demo: demo@vt.edu / password: demo</p>
+           </motion.div>
+         </main>
+       ) : (
+@@ -112,11 +121,13 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
+               <motion.h1
+                 initial={{ opacity: 0, x: -12 }}
+                 animate={{ opacity: 1, x: 0 }}
+-                className="text-3xl font-bold text-slate-50"
++                className="text-5xl font-extrabold leading-none text-[var(--ink)]"
+               >
+-                Hey, {session.user.name?.split(" ")[0] ?? "Hokie"} 👋
++                Your routes, {session.user.name?.split(" ")[0] ?? "Hokie"}
+               </motion.h1>
+-              <p className="mt-1 text-slate-400">Your saved academic paths light up here.</p>
++              <p className="mt-2 text-[var(--ink-soft)]">
++                Open a saved plan to keep editing, or map a new one.
++              </p>
+             </div>
+             <Link href="/create">
+               <Button type="button" className="w-full sm:w-auto">
+@@ -132,14 +143,15 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
+             <motion.div
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+-              className="mt-16 rounded-2xl border border-dashed border-cyan-500/25 bg-slate-900/40 p-12 text-center"
++              className="mt-12 rounded-xl border-[3px] border-dashed border-[var(--ink)]/25 p-12"
+             >
+-              <p className="text-lg text-slate-300">No plans yet — your first trace awaits.</p>
+-              <p className="mt-2 text-sm text-slate-500">
+-                Start with a transcript upload or demo data to generate a circuit-board roadmap.
++              <p className="font-mono-accent text-2xl font-bold text-[var(--ink)]">No plans yet</p>
++              <p className="mt-2 max-w-md text-[var(--ink-soft)]">
++                Upload your transcript, or use the demo data, and the agents will draw your first
++                route to graduation.
+               </p>
+               <Link href="/create" className="mt-6 inline-block">
+-                <Button type="button">Start planning</Button>
++                <Button type="button">Create new plan</Button>
+               </Link>
+             </motion.div>
+           ) : (
+diff --git a/src/components/home/PlanCard.tsx b/src/components/home/PlanCard.tsx
+index 5b4ed3b..cb6076b 100644
+--- a/src/components/home/PlanCard.tsx
++++ b/src/components/home/PlanCard.tsx
+@@ -2,20 +2,9 @@
+ 
+ import Link from "next/link";
+ import { motion } from "framer-motion";
+-import { ArrowRight, Calendar, Sparkles } from "lucide-react";
+ import type { PlanSummary } from "@/types/plan";
+-import { Card } from "@/components/ui/Card";
+ import { Badge } from "@/components/ui/Badge";
+-import { cn } from "@/lib/utils";
+-
+-const themeAccent: Record<string, string> = {
+-  circuit_board: "from-cyan-500/20 to-cyan-900/10 border-cyan-500/30",
+-  constellation: "from-indigo-500/20 to-purple-900/10 border-indigo-500/30",
+-  subway_map: "from-amber-500/15 to-orange-900/10 border-amber-500/30",
+-  mountain_trail: "from-emerald-500/15 to-green-900/10 border-emerald-500/30",
+-  watercolor_garden: "from-pink-500/15 to-rose-900/10 border-pink-500/30",
+-  blueprint: "from-blue-500/15 to-slate-900/10 border-blue-500/30",
+-};
++import { LINE_PALETTE } from "@/components/plan/tree-layout";
+ 
+ function statusBadge(status: PlanSummary["status"]) {
+   if (status === "ready") return "completed" as const;
+@@ -24,52 +13,66 @@ function statusBadge(status: PlanSummary["status"]) {
+   return "planned_future" as const;
+ }
+ 
++const statusLabel: Record<string, string> = {
++  ready: "Ready",
++  generating: "Generating",
++  error: "Needs attention",
++};
++
++/** A tiny route strip so each saved plan reads like its own line on the map. */
++function RouteStrip({ color }: { color: string }) {
++  return (
++    <svg viewBox="0 0 240 24" className="h-6 w-full" aria-hidden>
++      <path d="M 8 12 H 232" stroke={color} strokeWidth={7} strokeLinecap="round" />
++      {[8, 64, 120, 176].map((x, i) => (
++        <circle
++          key={x}
++          cx={x}
++          cy={12}
++          r={6}
++          fill={i < 2 ? "var(--ink)" : "#fff"}
++          stroke="var(--ink)"
++          strokeWidth={3}
++        />
++      ))}
++      <rect x={220} y={2} width={20} height={20} rx={10} fill="#fff" stroke="var(--ink)" strokeWidth={4} />
++    </svg>
++  );
++}
++
+ interface PlanCardProps {
+   plan: PlanSummary;
+   index: number;
+ }
+ 
+ export function PlanCard({ plan, index }: PlanCardProps) {
+-  const accent = themeAccent[plan.theme] ?? themeAccent.circuit_board;
++  const color = LINE_PALETTE[index % LINE_PALETTE.length];
+ 
+   return (
+     <motion.div
+-      initial={{ opacity: 0, y: 16 }}
++      initial={{ opacity: 0, y: 12 }}
+       animate={{ opacity: 1, y: 0 }}
+-      transition={{ delay: index * 0.06 }}
+-      whileHover={{ y: -4 }}
++      transition={{ delay: index * 0.05 }}
+     >
+-      <Link href={`/plan/${plan.id}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-xl">
+-        <Card
+-          glow="none"
+-          className={cn(
+-            "relative overflow-hidden bg-gradient-to-br transition-shadow hover:shadow-[var(--glow-cyan)]",
+-            accent
+-          )}
+-        >
+-          <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-cyan-400/10 blur-2xl" />
+-          <div className="flex items-start justify-between gap-2">
+-            <div>
+-              <h3 className="text-lg font-semibold text-slate-100">{plan.name}</h3>
+-              <p className="mt-1 text-sm text-slate-400">{plan.major}</p>
+-            </div>
+-            <Badge variant={statusBadge(plan.status)}>{plan.status}</Badge>
+-          </div>
+-          <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
+-            <span className="inline-flex items-center gap-1">
+-              <Calendar className="h-3.5 w-3.5" />
+-              {new Date(plan.updatedAt).toLocaleDateString()}
+-            </span>
+-            <span className="inline-flex items-center gap-1 capitalize">
+-              <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+-              {String(plan.theme).replace("_", " ")}
+-            </span>
+-          </div>
+-          <div className="mt-4 flex items-center gap-1 text-sm text-cyan-300">
+-            Open plan
+-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
++      <Link
++        href={`/plan/${plan.id}`}
++        className="group block rounded-xl border-2 border-[var(--ink)]/15 bg-[var(--paper-raised)] p-5 transition-colors hover:border-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange)]"
++      >
++        <RouteStrip color={color} />
++        <div className="mt-4 flex items-start justify-between gap-2">
++          <div className="min-w-0">
++            <h3 className="truncate text-2xl font-bold leading-tight text-[var(--ink)]">
++              {plan.name}
++            </h3>
++            <p className="mt-0.5 text-sm text-[var(--ink-soft)]">{plan.major}</p>
+           </div>
+-        </Card>
++          <Badge variant={statusBadge(plan.status)}>
++            {statusLabel[plan.status] ?? plan.status}
++          </Badge>
++        </div>
++        <p className="mt-4 text-sm text-[var(--ink-soft)]">
++          Updated {new Date(plan.updatedAt).toLocaleDateString()}
++        </p>
+       </Link>
+     </motion.div>
+   );
+diff --git a/src/components/plan/CourseDetailPanel.tsx b/src/components/plan/CourseDetailPanel.tsx
+index 7bf3e7b..00ad33d 100644
+--- a/src/components/plan/CourseDetailPanel.tsx
++++ b/src/components/plan/CourseDetailPanel.tsx
+@@ -42,7 +42,7 @@ function OfferingGrid() {
+     summer: "rarely",
+   };
+   return (
+-    <div className="grid grid-cols-3 gap-2 text-center text-[10px] uppercase text-slate-500">
++    <div className="grid grid-cols-3 gap-2 text-center text-[12px] text-[var(--ink-soft)]">
+       {terms.map((t) => (
+         <div key={t}>
+           <p>{t}</p>
+@@ -78,7 +78,7 @@ export function CourseDetailPanel({
+         <>
+           <motion.button
+             type="button"
+-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
++            className="fixed inset-0 z-40 bg-[var(--ink)]/30"
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+@@ -119,7 +119,7 @@ export function CourseDetailPanel({
+               </div>
+ 
+               <section>
+-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
++                <h3 className="font-mono-accent text-[15px] font-bold text-[var(--ink)]">
+                   Requirement
+                 </h3>
+                 <p className="mt-1 text-sm text-slate-200">{node.requirementBlockId}</p>
+@@ -127,7 +127,7 @@ export function CourseDetailPanel({
+ 
+               <section className="grid grid-cols-2 gap-4">
+                 <div>
+-                  <h3 className="text-xs font-semibold uppercase text-slate-500">Instructor</h3>
++                  <h3 className="font-mono-accent text-[15px] font-bold text-[var(--ink)]">Instructor</h3>
+                   <p className="mt-1 text-sm text-slate-200">{node.instructor ?? "TBD"}</p>
+                   <div className="mt-2 flex items-center gap-2">
+                     <Stars rating={rmpRating} />
+@@ -135,13 +135,13 @@ export function CourseDetailPanel({
+                   </div>
+                 </div>
+                 <div>
+-                  <h3 className="text-xs font-semibold uppercase text-slate-500">Would take again</h3>
++                  <h3 className="font-mono-accent text-[15px] font-bold text-[var(--ink)]">Would take again</h3>
+                   <p className="mt-1 text-2xl font-semibold text-emerald-300">{wouldTakeAgain}%</p>
+                 </div>
+               </section>
+ 
+               <section>
+-                <h3 className="text-xs font-semibold uppercase text-slate-500">Difficulty</h3>
++                <h3 className="font-mono-accent text-[15px] font-bold text-[var(--ink)]">Difficulty</h3>
+                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
+                   <div
+                     className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-red-500"
+@@ -151,7 +151,7 @@ export function CourseDetailPanel({
+               </section>
+ 
+               <section>
+-                <h3 className="text-xs font-semibold uppercase text-slate-500">Rigor summary</h3>
++                <h3 className="font-mono-accent text-[15px] font-bold text-[var(--ink)]">Rigor summary</h3>
+                 <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                   Expect steady weekly projects with exams weighted toward theory. Office hours are well
+                   attended — start problem sets early.
+@@ -159,25 +159,25 @@ export function CourseDetailPanel({
+               </section>
+ 
+               <section>
+-                <h3 className="text-xs font-semibold uppercase text-slate-500">Section times</h3>
++                <h3 className="font-mono-accent text-[15px] font-bold text-[var(--ink)]">Section times</h3>
+                 <p className="mt-1 text-sm text-slate-300">MWF 10:10–11:00 · McBryde 113</p>
+               </section>
+ 
+               <section>
+-                <h3 className="text-xs font-semibold uppercase text-slate-500">Historic offerings</h3>
++                <h3 className="font-mono-accent text-[15px] font-bold text-[var(--ink)]">Historic offerings</h3>
+                 <OfferingGrid />
+               </section>
+ 
+               {annotation ? (
+                 <section className="rounded-xl border border-pink-500/30 bg-pink-500/10 p-3">
+-                  <h3 className="text-xs font-semibold uppercase text-pink-300">Agent 4 note</h3>
++                  <h3 className="font-mono-accent text-[15px] font-bold text-[var(--maroon)]">Agent 4 note</h3>
+                   <p className="mt-1 text-sm text-pink-100/90">{annotation}</p>
+                 </section>
+               ) : null}
+ 
+               {node.alternatives.length > 0 ? (
+                 <section>
+-                  <h3 className="text-xs font-semibold uppercase text-slate-500">Alternatives</h3>
++                  <h3 className="font-mono-accent text-[15px] font-bold text-[var(--ink)]">Alternatives</h3>
+                   <ul className="mt-2 space-y-2">
+                     {node.alternatives.map((alt, i) => (
+                       <li key={i}>
+diff --git a/src/components/plan/GraduationProgress.tsx b/src/components/plan/GraduationProgress.tsx
+index 1b3b887..3451d92 100644
+--- a/src/components/plan/GraduationProgress.tsx
++++ b/src/components/plan/GraduationProgress.tsx
+@@ -16,9 +16,9 @@ export interface GraduationProgressProps {
+ }
+ 
+ const SEGMENTS = [
+-  { key: "completed" as const, label: "Completed", className: "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.45)]" },
+-  { key: "inProgress" as const, label: "In progress", className: "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.4)]" },
+-  { key: "planned" as const, label: "Planned", className: "bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.45)]" },
++  { key: "completed" as const, label: "Completed", className: "bg-[var(--ink)]" },
++  { key: "inProgress" as const, label: "In progress", className: "bg-[var(--orange)]" },
++  { key: "planned" as const, label: "Planned", className: "bg-white border-2 border-[var(--ink)]" },
+   { key: "remaining" as const, label: "Remaining", className: "bg-slate-700/90" },
+ ];
+ 
+@@ -47,7 +47,7 @@ export function GraduationProgress({
+     <Card glow="cyan" className="mb-8 border border-cyan-500/25 glow-border-cyan">
+       <div className="flex flex-wrap items-start justify-between gap-4">
+         <div>
+-          <p className="font-mono-accent text-xs uppercase tracking-widest text-cyan-500/70">
++          <p className="font-mono-accent text-base font-bold text-[var(--ink-soft)]">
+             Graduation progress
+           </p>
+           <p className="mt-1 text-sm text-slate-400">
+@@ -56,7 +56,7 @@ export function GraduationProgress({
+           </p>
+         </div>
+         <div className="text-right">
+-          <p className="text-3xl font-bold tabular-nums text-slate-50 glow-text-cyan">
++          <p className="text-3xl font-bold tabular-nums text-slate-50">
+             {breakdown.percent}%
+           </p>
+           <p className="text-sm text-slate-400 tabular-nums">
+diff --git a/src/components/plan/PlanViewClient.tsx b/src/components/plan/PlanViewClient.tsx
+index 6b77bc3..8176479 100644
+--- a/src/components/plan/PlanViewClient.tsx
++++ b/src/components/plan/PlanViewClient.tsx
+@@ -215,10 +215,10 @@ export function PlanViewClient() {
+           animate={{ opacity: 1, y: 0 }}
+           className="mb-8 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/80 to-slate-950/90 p-6 glow-border-cyan"
+         >
+-          <p className="font-mono-accent text-xs uppercase tracking-widest text-cyan-500/70">
++          <p className="font-mono-accent text-base font-bold text-[var(--ink-soft)]">
+             Circuit board view
+           </p>
+-          <h2 className="mt-2 text-2xl font-semibold text-slate-50 glow-text-cyan">
++          <h2 className="mt-2 text-2xl font-semibold text-slate-50">
+             {spec.heroMessage}
+           </h2>
+           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-700/60 bg-slate-900/60 px-3 py-1 text-sm text-slate-300">
+diff --git a/src/components/plan/PlanVisualization.tsx b/src/components/plan/PlanVisualization.tsx
+index b6d9e3b..e92ff91 100644
+--- a/src/components/plan/PlanVisualization.tsx
++++ b/src/components/plan/PlanVisualization.tsx
+@@ -30,13 +30,16 @@ import { Button } from "@/components/ui/Button";
+ import {
+   branchColorForStatus,
+   compareSemesters,
++  computeLineColors,
+   computeTreeLayout,
+   formatSemesterLabel,
+   getNodePortIn,
+   getNodePortOut,
+   nodeFillForStatus,
+   nodeStrokeForStatus,
++  nodeStrokeWidthForStatus,
+   termKey,
++  transitPath,
+   TREE_LAYOUT,
+ } from "@/components/plan/tree-layout";
+ import { cn, formatCourseCode } from "@/lib/utils";
+@@ -140,7 +143,7 @@ function SemesterDropColumn({
+       ref={setNodeRef}
+       className={cn(
+         "absolute top-0 rounded-xl border border-transparent transition-colors",
+-        isOver && "border-cyan-400/40 bg-cyan-500/5"
++        isOver && "border-2 border-dashed border-[var(--maroon)] bg-[var(--maroon)]/5"
+       )}
+       style={{
+         left: x - 110,
+@@ -157,15 +160,15 @@ function DragTreeNodePreview({ node }: { node: PlanNode }) {
+   return (
+     <div className="flex items-center gap-2 opacity-90">
+       <span
+-        className="rounded-full shadow-lg"
++        className="rounded-full shadow-[0_6px_16px_rgba(29,26,36,0.25)]"
+         style={{
+           width: r * 2,
+           height: r * 2,
+-          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), transparent 45%), ${nodeFillForStatus(node.status)}`,
+-          border: `2px solid ${nodeStrokeForStatus(node.status)}`,
++          background: nodeFillForStatus(node.status),
++          border: `${nodeStrokeWidthForStatus(node.status)}px solid ${nodeStrokeForStatus(node.status)}`,
+         }}
+       />
+-      <span className="font-mono-accent text-xs font-bold text-white">
++      <span className="rounded bg-[var(--paper-raised)] px-1.5 py-0.5 font-mono-accent text-sm font-bold text-[var(--ink)] shadow-sm">
+         {formatCourseCode(node.courseId)}
+       </span>
+     </div>
+@@ -209,6 +212,10 @@ export function PlanVisualization({
+   }, [planGraph]);
+ 
+   const layout = useMemo(() => computeTreeLayout(graph), [graph]);
++  const lineColors = useMemo(
++    () => computeLineColors(graph, layout.positions),
++    [graph, layout.positions]
++  );
+ 
+   const nodeMap = useMemo(() => {
+     const m = new Map<string, PlanNode>();
+@@ -340,36 +347,53 @@ export function PlanVisualization({
+ 
+         const from = getNodePortOut(fromPos);
+         const to = getNodePortIn(toPos);
+-        const dx = to.x - from.x;
+-        const c1x = from.x + Math.max(48, dx * 0.42);
+-        const c2x = to.x - Math.max(48, dx * 0.42);
+-        const d = `M ${from.x} ${from.y} C ${c1x} ${from.y}, ${c2x} ${to.y}, ${to.x} ${to.y}`;
++        const d = transitPath(from, to);
+ 
+         const inChain =
+           highlightActive &&
+           hoverHighlight.has(edge.from) &&
+           hoverHighlight.has(edge.to);
++        const fromNode = nodeMap.get(edge.from);
+         const toNode = nodeMap.get(edge.to);
+-        const status = toNode?.status ?? "planned_future";
+-        const stroke = branchColorForStatus(status, inChain);
+-        const opacity = highlightActive ? (inChain ? 0.8 : 0.1) : 0.25;
+-        const strokeWidth = highlightActive ? (inChain ? 2.5 : 1) : 1.5;
++        const traveled = fromNode?.status === "completed" && toNode?.status === "completed";
++        const stroke =
++          lineColors.get(edge.from) ??
++          branchColorForStatus(toNode?.status ?? "planned_future", inChain);
++        const opacity = highlightActive
++          ? inChain
++            ? 1
++            : 0.12
++          : traveled
++            ? 0.4
++            : 0.95;
++        const strokeWidth = inChain ? 7 : 5;
+ 
+         return (
+-          <path
+-            key={`${edge.from}-${edge.to}`}
+-            d={d}
+-            fill="none"
+-            stroke={stroke}
+-            strokeWidth={strokeWidth}
+-            strokeLinecap="round"
+-            opacity={opacity}
+-            markerEnd="url(#branch-arrowhead)"
+-            filter={inChain ? "url(#organic-glow)" : undefined}
+-          />
++          <g key={`${edge.from}-${edge.to}`}>
++            {/* Paper-colored casing so crossing lines read as separate tracks */}
++            <path
++              d={d}
++              fill="none"
++              stroke="var(--paper-raised)"
++              strokeWidth={strokeWidth + 4}
++              strokeLinecap="round"
++              strokeLinejoin="round"
++              opacity={highlightActive && !inChain ? 0 : 1}
++            />
++            <path
++              d={d}
++              fill="none"
++              stroke={stroke}
++              strokeWidth={strokeWidth}
++              strokeLinecap="round"
++              strokeLinejoin="round"
++              opacity={opacity}
++              style={{ transition: "opacity 180ms ease, stroke-width 180ms ease" }}
++            />
++          </g>
+         );
+       });
+-  }, [graph.edges, highlightActive, hoverHighlight, layout.positions, nodeMap]);
++  }, [graph.edges, highlightActive, hoverHighlight, layout.positions, lineColors, nodeMap]);
+ 
+   const electiveDecorPath = useMemo(() => {
+     const electives = [...layout.positions.values()].filter((p) => p.isElective);
+@@ -384,19 +408,19 @@ export function PlanVisualization({
+           x={TREE_LAYOUT.startX - 52}
+           y={y + 5}
+           textAnchor="end"
+-          className="fill-slate-500 italic"
+-          style={{ fontSize: 14, fontStyle: "italic" }}
++          fill="var(--ink-soft)"
++          style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--font-barlow-condensed)" }}
+         >
+           Electives
+         </text>
+         <path
+           d={d}
+           fill="none"
+-          stroke="rgba(148, 163, 184, 0.35)"
+-          strokeWidth={2.5}
++          stroke="var(--ink)"
++          strokeWidth={2}
+           strokeLinecap="round"
+-          strokeDasharray="6 8"
+-          opacity={0.5}
++          strokeDasharray="2 7"
++          opacity={0.45}
+         />
+       </g>
+     );
+@@ -410,6 +434,17 @@ export function PlanVisualization({
+ 
+   const tooltipPos = hoveredNode ? layout.positions.get(hoveredNode.id) : undefined;
+ 
++  // "You are here": the semester the student is in now, or the next one up.
++  const currentTermKey = useMemo(() => {
++    const now =
++      graph.nodes.find((n) => n.status === "in_progress") ??
++      graph.nodes.find((n) => n.status === "planned_next");
++    return now ? termKey(now.semester) : null;
++  }, [graph.nodes]);
++
++  const headerY = 44;
++  const bandLeftOffset = 56;
++
+   return (
+     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+       <div className="relative">
+@@ -444,8 +479,8 @@ export function PlanVisualization({
+         <TreeLegend />
+ 
+         <div
+-          className="relative max-h-[min(75vh,780px)] overflow-x-auto overflow-y-auto rounded-2xl border border-slate-700/40 p-4"
+-          style={{ backgroundColor: "#0A0E17" }}
++          className="relative max-h-[min(75vh,780px)] overflow-x-auto overflow-y-auto rounded-xl border border-[var(--ink)]/15 p-4"
++          style={{ backgroundColor: "var(--paper-raised)" }}
+           onWheel={handleWheel}
+         >
+           <motion.div
+@@ -463,76 +498,65 @@ export function PlanVisualization({
+                 viewBox={`0 0 ${layout.width} ${layout.height}`}
+                 aria-hidden
+               >
+-                <defs>
+-                  <pattern
+-                    id="tree-grid"
+-                    width="32"
+-                    height="32"
+-                    patternUnits="userSpaceOnUse"
+-                  >
+-                    <path
+-                      d="M 32 0 L 0 0 0 32"
+-                      fill="none"
+-                      stroke="rgba(148, 163, 184, 0.06)"
+-                      strokeWidth="1"
+-                    />
+-                  </pattern>
+-                  <filter id="organic-glow" x="-30%" y="-30%" width="160%" height="160%">
+-                    <feGaussianBlur stdDeviation="2.2" result="blur" />
+-                    <feMerge>
+-                      <feMergeNode in="blur" />
+-                      <feMergeNode in="SourceGraphic" />
+-                    </feMerge>
+-                  </filter>
+-                  <marker
+-                    id="branch-arrowhead"
+-                    markerWidth="7"
+-                    markerHeight="7"
+-                    refX="6"
+-                    refY="3.5"
+-                    orient="auto"
+-                    markerUnits="strokeWidth"
+-                  >
+-                    <path d="M0,0 L7,3.5 L0,7 Z" fill="context-stroke" />
+-                  </marker>
+-                </defs>
+-                <rect width="100%" height="100%" fill="url(#tree-grid)" />
++                {/* Semester zones, like fare zones on a transit map */}
++                {layout.semesterColumns.map((col, i) => (
++                  <rect
++                    key={`zone-${termKey(col.term)}`}
++                    x={col.x - bandLeftOffset}
++                    y={0}
++                    width={TREE_LAYOUT.columnGap}
++                    height={layout.height}
++                    fill={
++                      termKey(col.term) === currentTermKey
++                        ? "rgba(229, 117, 31, 0.08)"
++                        : i % 2 === 0
++                          ? "var(--paper-sunk)"
++                          : "transparent"
++                    }
++                    opacity={termKey(col.term) === currentTermKey ? 1 : 0.35}
++                  />
++                ))}
+                 {electiveDecorPath}
+                 {branchPaths}
+                 {layout.semesterColumns.map((col) => {
+                   const credits = semesterCreditsByKey.get(termKey(col.term)) ?? 0;
+-                  const label = `${formatSemesterLabel(col.term)} · ${credits}cr`;
+-                  const pillW = Math.max(120, label.length * 7.2 + 28);
++                  const isNow = termKey(col.term) === currentTermKey;
++                  const left = col.x - bandLeftOffset + 16;
+                   return (
+                     <g key={termKey(col.term)}>
+-                      <rect
+-                        x={col.x - pillW / 2}
+-                        y={col.labelY - 18}
+-                        width={pillW}
+-                        height={26}
+-                        rx={13}
+-                        fill="rgba(15, 23, 42, 0.85)"
+-                        stroke="rgba(148, 163, 184, 0.2)"
+-                        strokeWidth={1}
+-                      />
+                       <text
+-                        x={col.x}
+-                        y={col.labelY}
+-                        textAnchor="middle"
+-                        className="fill-slate-100 font-bold"
+-                        style={{ fontSize: 18, fontWeight: 700 }}
++                        x={left}
++                        y={headerY}
++                        fill="var(--ink)"
++                        style={{
++                          fontSize: 22,
++                          fontWeight: 800,
++                          fontFamily: "var(--font-barlow-condensed)",
++                        }}
++                      >
++                        {formatSemesterLabel(col.term)}
++                      </text>
++                      <text
++                        x={left}
++                        y={headerY + 20}
++                        fill="var(--ink-soft)"
++                        style={{ fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}
+                       >
+-                        {label}
++                        {credits} credits
+                       </text>
+-                      <line
+-                        x1={col.x - 52}
+-                        y1={col.labelY + 10}
+-                        x2={col.x + 52}
+-                        y2={col.labelY + 10}
+-                        stroke="rgba(148, 163, 184, 0.35)"
+-                        strokeWidth={1.5}
+-                        strokeLinecap="round"
+-                      />
++                      {isNow ? (
++                        <g transform={`translate(${left + 84}, ${headerY + 15})`}>
++                          <circle r={7} fill="var(--orange)" stroke="var(--ink)" strokeWidth={2} />
++                          <text
++                            x={13}
++                            y={4}
++                            fill="var(--ink)"
++                            style={{ fontSize: 13, fontWeight: 700 }}
++                          >
++                            You are here
++                          </text>
++                        </g>
++                      ) : null}
+                     </g>
+                   );
+                 })}
+diff --git a/src/components/plan/TrashZone.tsx b/src/components/plan/TrashZone.tsx
+index 3b81992..5ed1a73 100644
+--- a/src/components/plan/TrashZone.tsx
++++ b/src/components/plan/TrashZone.tsx
+@@ -16,26 +16,28 @@ export function TrashZone({ visible }: TrashZoneProps) {
+     <AnimatePresence>
+       {visible ? (
+         <motion.div
+-          initial={{ y: 80, opacity: 0 }}
+-          animate={{ y: 0, opacity: 1 }}
+-          exit={{ y: 80, opacity: 0 }}
++          initial={{ y: 90, opacity: 0 }}
++          animate={{ y: 0, opacity: 1, scale: isOver ? 1.08 : 1 }}
++          exit={{ y: 90, opacity: 0 }}
++          transition={{ type: "spring", stiffness: 420, damping: 26 }}
+           ref={setNodeRef}
+           className={cn(
+-            "fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-2xl border px-8 py-4 backdrop-blur-md",
++            "fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border-[3px] px-7 py-3.5 transition-colors",
+             isOver
+-              ? "border-red-400 bg-red-500/25 shadow-[var(--glow-red)] scale-105"
+-              : "border-red-500/30 bg-slate-900/90"
++              ? "border-[var(--ink)] bg-[var(--danger)] text-white"
++              : "border-[var(--ink)] bg-[var(--paper-raised)] text-[var(--ink)]"
+           )}
++          style={{ boxShadow: "0 10px 30px rgba(29, 26, 36, 0.25)" }}
+           aria-label="Drop here to remove course"
+         >
+           <motion.div
+-            animate={isOver ? { rotate: [0, -8, 8, 0], scale: [1, 0.9, 1] } : { rotate: 0 }}
+-            transition={{ repeat: isOver ? Infinity : 0, duration: 0.5 }}
++            animate={isOver ? { rotate: [0, -12, 12, 0] } : { rotate: 0 }}
++            transition={{ repeat: isOver ? Infinity : 0, duration: 0.45 }}
+           >
+-            <Trash2 className={cn("h-6 w-6", isOver ? "text-red-200" : "text-red-400/80")} />
++            <Trash2 className="h-6 w-6" />
+           </motion.div>
+-          <span className="text-sm font-medium text-red-100">
+-            {isOver ? "Release to remove" : "Drag here to trash"}
++          <span className="font-mono-accent text-lg font-bold">
++            {isOver ? "Release to remove this stop" : "Drop here to remove"}
+           </span>
+         </motion.div>
+       ) : null}
+diff --git a/src/components/plan/TreeLegend.tsx b/src/components/plan/TreeLegend.tsx
+index d8c03c6..9a9e9f8 100644
+--- a/src/components/plan/TreeLegend.tsx
++++ b/src/components/plan/TreeLegend.tsx
+@@ -1,46 +1,68 @@
+ "use client";
+ 
++import { LINE_PALETTE } from "@/components/plan/tree-layout";
++
++function Station({
++  fill,
++  stroke,
++  width = 3,
++  dashed,
++}: {
++  fill: string;
++  stroke: string;
++  width?: number;
++  dashed?: boolean;
++}) {
++  return (
++    <span
++      className="inline-block h-3.5 w-3.5 shrink-0 rounded-full"
++      style={{
++        background: fill,
++        border: `${width}px ${dashed ? "dashed" : "solid"} ${stroke}`,
++      }}
++      aria-hidden
++    />
++  );
++}
++
++/** Map key, in the spirit of the key box on a printed transit map. */
+ export function TreeLegend() {
+   return (
+-    <div className="glass-panel mb-3 rounded-xl px-4 py-2.5 text-[11px] leading-relaxed text-slate-400">
+-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+-        <span className="inline-flex items-center gap-1.5">
+-          <span
+-            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-[#4B5563]"
+-            style={{ backgroundColor: "#6B7280" }}
+-            aria-hidden
+-          />
++    <div className="glass-panel mb-3 rounded-lg px-4 py-3 text-[13px] leading-relaxed text-[var(--ink-soft)]">
++      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
++        <span className="font-mono-accent text-base font-bold text-[var(--ink)]">Map key</span>
++        <span className="inline-flex items-center gap-2">
++          <Station fill="#1D1A24" stroke="#1D1A24" width={2} />
+           Completed
+         </span>
+-        <span className="inline-flex items-center gap-1.5">
+-          <span
+-            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-[#059669] shadow-[0_0_6px_rgba(16,185,129,0.6)]"
+-            style={{ backgroundColor: "#10B981" }}
+-            aria-hidden
+-          />
+-          Taking Now
++        <span className="inline-flex items-center gap-2">
++          <Station fill="#E5751F" stroke="#1D1A24" />
++          Taking now
++        </span>
++        <span className="inline-flex items-center gap-2">
++          <Station fill="#FFFFFF" stroke="#861F41" width={4} />
++          Next semester
+         </span>
+-        <span className="inline-flex items-center gap-1.5">
+-          <span
+-            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-[#D97706]"
+-            style={{ backgroundColor: "#F59E0B" }}
+-            aria-hidden
+-          />
++        <span className="inline-flex items-center gap-2">
++          <Station fill="#FFFFFF" stroke="#1D1A24" />
+           Planned
+         </span>
+-        <span className="inline-flex items-center gap-1.5">
+-          <span
+-            className="inline-block h-5 w-8 shrink-0 rounded-full bg-slate-500/20"
+-            aria-hidden
+-          >
+-            <span className="block h-px w-full translate-y-[9px] bg-slate-400/50" />
++        <span className="inline-flex items-center gap-2">
++          <Station fill="#FFFFFF" stroke="#1D1A24" dashed />
++          Estimate
++        </span>
++        <span className="inline-flex items-center gap-2">
++          <span className="flex gap-0.5" aria-hidden>
++            {LINE_PALETTE.slice(0, 4).map((c) => (
++              <span key={c} className="h-1.5 w-3 rounded-full" style={{ background: c }} />
++            ))}
+           </span>
+-          Prerequisite
++          Prerequisite lines
+         </span>
+       </div>
+-      <p className="mt-1.5 text-slate-500">
+-        Drag courses between semesters · Click to view details · Lines show prerequisites — a
+-        course can&apos;t move before its prereqs
++      <p className="mt-1.5 text-[12px]">
++        Each colored line is a prerequisite chain. Drag a course to another semester, or to the
++        trash to replace it. A course can&apos;t move ahead of its prerequisites.
+       </p>
+     </div>
+   );
+diff --git a/src/components/plan/TreeNode.tsx b/src/components/plan/TreeNode.tsx
+index bc32229..bf88cba 100644
+--- a/src/components/plan/TreeNode.tsx
++++ b/src/components/plan/TreeNode.tsx
+@@ -10,6 +10,7 @@ import { DEMO_COURSE_TITLES } from "@/lib/demo-plan";
+ import {
+   nodeFillForStatus,
+   nodeStrokeForStatus,
++  nodeStrokeWidthForStatus,
+   TREE_LAYOUT,
+ } from "@/components/plan/tree-layout";
+ 
+@@ -110,44 +111,46 @@ export function TreeNode({
+         className={cn(
+           "relative flex shrink-0 items-center justify-center rounded-full transition-shadow duration-200",
+           node.status === "in_progress" && "animate-tree-node-live",
+-          highlighted && "shadow-[0_0_16px_rgba(16,185,129,0.55)]",
+-          selected && "ring-[3px] ring-[#FF6600] shadow-[0_0_18px_rgba(255,102,0,0.55)]",
+-          suggestionHighlight && "ring-2 ring-violet-400/80 shadow-[0_0_14px_rgba(167,139,250,0.5)]",
+-          flashError && "ring-[3px] ring-red-500 shadow-[0_0_20px_rgba(239,68,68,0.75)]"
++          selected && "ring-[3px] ring-[var(--orange)] ring-offset-2 ring-offset-[var(--paper-raised)]",
++          suggestionHighlight && "ring-2 ring-[var(--line-blue)] ring-offset-2 ring-offset-[var(--paper-raised)]",
++          flashError && "ring-[3px] ring-[var(--danger)] ring-offset-2 ring-offset-[var(--paper-raised)]"
+         )}
+         style={{
+           width: diameter,
+           height: diameter,
+-          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), transparent 45%), ${nodeFillForStatus(node.status)}`,
+-          border: `2px solid ${nodeStrokeForStatus(node.status)}`,
++          background: nodeFillForStatus(node.status),
++          border: `${nodeStrokeWidthForStatus(node.status)}px ${
++            node.confidence === "low" ? "dashed" : "solid"
++          } ${nodeStrokeForStatus(node.status)}`,
+         }}
+       >
+         {showWarningBadge ? (
+-          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white shadow-[var(--glow-red)]">
++          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full border-2 border-[var(--paper-raised)] bg-[var(--danger)] text-white">
+             <AlertTriangle className="h-2.5 w-2.5" />
+           </span>
+         ) : null}
+       </span>
+ 
+-      <div className="flex min-w-0 flex-col">
++      {/* Station name, set like a map label */}
++      <div className="flex min-w-0 flex-col rounded bg-[var(--paper-raised)]/85 px-1 py-0.5">
+         <span
+           className={cn(
+-            "whitespace-nowrap font-mono-accent text-xs font-bold leading-none text-white",
+-            dimmed && "text-slate-500"
++            "whitespace-nowrap font-mono-accent text-[15px] font-bold leading-none text-[var(--ink)]",
++            node.status === "completed" && "text-[var(--ink-soft)]",
++            dimmed && "opacity-60"
+           )}
+         >
+           {formatCourseCode(node.courseId)}
++          <span className="ml-1.5 text-[11px] font-semibold text-[var(--ink-soft)]">
++            {credits} cr
++          </span>
+         </span>
+-        {localHover ? (
+-          <span className="mt-0.5 max-w-[140px] truncate text-[10px] leading-tight text-slate-400">
++        {localHover || selected ? (
++          <span className="mt-1 max-w-[150px] truncate text-[11px] leading-tight text-[var(--ink-soft)]">
+             {title}
+           </span>
+         ) : null}
+       </div>
+-
+-      <span className="shrink-0 text-[9px] font-medium tabular-nums text-slate-500">
+-        {credits}cr
+-      </span>
+     </motion.div>
+   );
+ }
+diff --git a/src/components/plan/tree-layout.ts b/src/components/plan/tree-layout.ts
+index 67c0f47..006d50e 100644
+--- a/src/components/plan/tree-layout.ts
++++ b/src/components/plan/tree-layout.ts
+@@ -308,47 +308,142 @@ export function edgeWaveOffset(fromId: string, toId: string): number {
+   return ((hash % 17) - 8) * 0.75;
+ }
+ 
++/** Transit-line palette. Each prerequisite chain rides its own colored line. */
++export const LINE_PALETTE = [
++  "#861F41", // maroon
++  "#E5751F", // burnt orange
++  "#2F5DA8", // blue
++  "#2E8B57", // green
++  "#127A86", // teal
++  "#C99200", // mustard
++] as const;
++
++/**
++ * Assign every prerequisite-connected course to a "line". Roots (courses with
++ * no prerequisite parents) each start a new line; a course inherits the line
++ * of its first parent, so a chain like CS 1114 → 2114 → 3114 stays one color.
++ * Edges are colored by the line of the course they leave from, so where two
++ * lines meet the map reads like a transfer station.
++ */
++export function computeLineColors(
++  graph: PlanGraph,
++  positions: Map<string, TreeNodePosition>
++): Map<string, string> {
++  const parentsOf = new Map<string, string[]>();
++  for (const e of graph.edges) {
++    if (e.type !== "prerequisite") continue;
++    const list = parentsOf.get(e.to) ?? [];
++    list.push(e.from);
++    parentsOf.set(e.to, list);
++  }
++
++  const ordered = [...positions.values()]
++    .filter((p) => !p.isElective)
++    .sort((a, b) => a.columnIndex - b.columnIndex || a.y - b.y);
++
++  const lineOf = new Map<string, number>();
++  let nextLine = 0;
++  for (const pos of ordered) {
++    const parents = (parentsOf.get(pos.id) ?? []).filter((id) => lineOf.has(id));
++    if (parents.length === 0) {
++      lineOf.set(pos.id, nextLine++);
++    } else {
++      // Prefer the parent sitting closest vertically: the straightest track.
++      const best = parents.reduce((a, b) =>
++        Math.abs((positions.get(a)?.y ?? 0) - pos.y) <= Math.abs((positions.get(b)?.y ?? 0) - pos.y)
++          ? a
++          : b
++      );
++      lineOf.set(pos.id, lineOf.get(best)!);
++    }
++  }
++
++  const colors = new Map<string, string>();
++  lineOf.forEach((line, id) => colors.set(id, LINE_PALETTE[line % LINE_PALETTE.length]));
++  return colors;
++}
++
++/**
++ * Route an edge the way Beck and Vignelli drew track: horizontal runs joined
++ * by a single 45° diagonal, with softened corners.
++ */
++export function transitPath(
++  from: { x: number; y: number },
++  to: { x: number; y: number }
++): string {
++  const dx = to.x - from.x;
++  const dy = to.y - from.y;
++  if (Math.abs(dy) < 1) return `M ${from.x} ${from.y} H ${to.x}`;
++
++  const minRun = 18;
++  const diag = Math.min(Math.abs(dy), Math.max(0, dx - minRun * 2));
++  const run = (dx - diag) / 2;
++  const sign = dy > 0 ? 1 : -1;
++
++  const a = { x: from.x + run, y: from.y };
++  // If the drop is steeper than 45°, finish it with a vertical segment.
++  const b = { x: a.x + diag, y: from.y + sign * diag };
++  const c = { x: b.x, y: to.y };
++  const r = Math.min(10, run, diag / 2 || 10);
++
++  const parts = [`M ${from.x} ${from.y}`, `H ${a.x - r}`, `Q ${a.x} ${a.y} ${a.x + r * 0.7} ${a.y + sign * r * 0.7}`];
++  if (Math.abs(c.y - b.y) > 1) {
++    parts.push(`L ${b.x - r * 0.4} ${b.y - sign * r * 0.4}`, `Q ${b.x} ${b.y} ${b.x} ${b.y + sign * r}`);
++    parts.push(`V ${c.y - sign * r}`, `Q ${c.x} ${c.y} ${c.x + r} ${c.y}`);
++  } else {
++    parts.push(`L ${b.x - r * 0.7} ${b.y - sign * r * 0.7}`, `Q ${b.x} ${b.y} ${b.x + r} ${b.y}`);
++  }
++  parts.push(`H ${to.x}`);
++  return parts.join(" ");
++}
++
+ export function branchColorForStatus(status: PlanNode["status"], highlighted: boolean): string {
+   switch (status) {
+     case "completed":
+-      return highlighted ? "#9CA3AF" : "#6B7280";
++      return highlighted ? "#45404D" : "#8A8590";
+     case "in_progress":
+-      return highlighted ? "#34D399" : "#10B981";
++      return "#E5751F";
+     case "planned_next":
++      return "#861F41";
+     case "planned_future":
+-      return highlighted ? "#FBBF24" : "#F59E0B";
++      return highlighted ? "#1D1A24" : "#45404D";
+     default:
+-      return "#6B7280";
++      return "#8A8590";
+   }
+ }
+ 
++/** Station fill: passed stops are solid ink, the current stop is orange, upcoming stops are open. */
+ export function nodeFillForStatus(status: PlanNode["status"]): string {
+   switch (status) {
+     case "completed":
+-      return "#6B7280";
++      return "#1D1A24";
+     case "in_progress":
+-      return "#10B981";
++      return "#E5751F";
+     case "planned_next":
+-      return "#F59E0B";
+     case "planned_future":
+-      return "rgba(245, 158, 11, 0.7)";
++      return "#FFFFFF";
+     default:
+-      return "#6B7280";
++      return "#FFFFFF";
+   }
+ }
+ 
+ export function nodeStrokeForStatus(status: PlanNode["status"]): string {
+   switch (status) {
+-    case "completed":
+-      return "#4B5563";
+-    case "in_progress":
+-      return "#059669";
+     case "planned_next":
+-      return "#D97706";
+-    case "planned_future":
+-      return "#B45309";
++      return "#861F41";
++    default:
++      return "#1D1A24";
++  }
++}
++
++export function nodeStrokeWidthForStatus(status: PlanNode["status"]): number {
++  switch (status) {
++    case "planned_next":
++      return 4;
++    case "completed":
++      return 2;
+     default:
+-      return "#374151";
++      return 3;
+   }
+ }
+ 
+diff --git a/src/components/ui/Badge.tsx b/src/components/ui/Badge.tsx
+index c0f2309..1fbcec2 100644
+--- a/src/components/ui/Badge.tsx
++++ b/src/components/ui/Badge.tsx
+@@ -6,12 +6,12 @@ import type { CourseStatus } from "@/types/contracts";
+ type BadgeVariant = CourseStatus | "warning" | "neutral";
+ 
+ const styles: Record<BadgeVariant, string> = {
+-  completed: "bg-emerald-500/15 text-emerald-300 border-emerald-400/40",
+-  in_progress: "bg-amber-500/15 text-amber-200 border-amber-400/40 animate-pulse-glow",
+-  planned_next: "bg-cyan-500/25 text-cyan-100 border-cyan-400/50 shadow-[var(--glow-cyan)]",
+-  planned_future: "bg-cyan-500/10 text-cyan-200/80 border-cyan-500/25",
+-  warning: "bg-red-500/15 text-red-200 border-red-400/40",
+-  neutral: "bg-slate-500/15 text-slate-300 border-slate-500/30",
++  completed: "bg-[var(--ink)] text-[var(--paper-raised)] border-[var(--ink)]",
++  in_progress: "bg-[var(--orange)] text-[var(--ink)] border-[var(--ink)]",
++  planned_next: "bg-white text-[var(--maroon)] border-[var(--maroon)]",
++  planned_future: "bg-white text-[var(--ink)] border-[var(--ink)]/40",
++  warning: "bg-[var(--danger)] text-white border-[var(--danger)]",
++  neutral: "bg-[var(--paper-sunk)] text-[var(--ink-soft)] border-transparent",
+ };
+ 
+ const labels: Record<BadgeVariant, string> = {
+@@ -33,7 +33,7 @@ export function Badge({ variant, className, children }: BadgeProps) {
+   return (
+     <span
+       className={cn(
+-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
++        "inline-flex items-center rounded-full border-2 px-2 py-0.5 font-mono-accent text-[12px] font-bold",
+         styles[variant],
+         className
+       )}
+diff --git a/src/components/ui/Button.tsx b/src/components/ui/Button.tsx
+index 95f5fb0..aaea365 100644
+--- a/src/components/ui/Button.tsx
++++ b/src/components/ui/Button.tsx
+@@ -10,15 +10,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+   loading?: boolean;
+ }
+ 
++// Buttons borrow from station signage: solid color plates with a heavy ink edge.
+ const variants: Record<Variant, string> = {
+   primary:
+-    "bg-cyan-500/20 text-cyan-100 border border-cyan-400/40 hover:bg-cyan-500/30 hover:shadow-[var(--glow-cyan)]",
++    "bg-[var(--maroon)] text-white border-2 border-[var(--maroon)] hover:bg-[#6f1936] hover:border-[#6f1936]",
+   secondary:
+-    "bg-[var(--vt-maroon)]/20 text-orange-100 border border-[var(--vt-maroon)]/50 hover:border-[var(--vt-orange)]/60",
++    "bg-[var(--paper-raised)] text-[var(--ink)] border-2 border-[var(--ink)] hover:bg-white",
+   ghost:
+-    "bg-transparent text-slate-300 border border-transparent hover:border-cyan-500/30 hover:text-cyan-100",
++    "bg-transparent text-[var(--ink-soft)] border-2 border-transparent hover:text-[var(--ink)] hover:bg-[var(--ink)]/5",
+   danger:
+-    "bg-red-500/15 text-red-100 border border-red-400/40 hover:shadow-[var(--glow-red)]",
++    "bg-[var(--danger)] text-white border-2 border-[var(--danger)] hover:bg-[#a82826]",
+ };
+ 
+ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+@@ -28,8 +29,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+         ref={ref}
+         type={type}
+         className={cn(
+-          "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 disabled:opacity-50 disabled:pointer-events-none",
+-          !disabled && !loading && "hover:scale-[1.02] active:scale-[0.98]",
++          "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 font-mono-accent text-[15px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--paper)] disabled:opacity-50 disabled:pointer-events-none",
+           variants[variant],
+           className
+         )}
+@@ -37,7 +37,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+         {...props}
+       >
+         {loading ? (
+-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-cyan-300/30 border-t-cyan-300" />
++          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" />
+         ) : null}
+         {children}
+       </button>
+diff --git a/src/components/ui/Modal.tsx b/src/components/ui/Modal.tsx
+index 0567237..7c771f9 100644
+--- a/src/components/ui/Modal.tsx
++++ b/src/components/ui/Modal.tsx
+@@ -28,7 +28,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
+         >
+           <motion.button
+             type="button"
+-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
++            className="absolute inset-0 bg-[var(--ink)]/40"
+             aria-label="Close modal backdrop"
+             onClick={onClose}
+             initial={{ opacity: 0 }}
+diff --git a/src/components/ui/ProgressBar.tsx b/src/components/ui/ProgressBar.tsx
+index e05e744..4d5a763 100644
+--- a/src/components/ui/ProgressBar.tsx
++++ b/src/components/ui/ProgressBar.tsx
+@@ -11,12 +11,13 @@ interface ProgressBarProps {
+   className?: string;
+ }
+ 
++// Solid line colors, matching the transit palette on the plan map.
+ const colorMap = {
+-  cyan: "from-cyan-600 to-cyan-400 shadow-[var(--glow-cyan)]",
+-  purple: "from-violet-600 to-fuchsia-400 shadow-[0_0_16px_rgba(167,139,250,0.4)]",
+-  green: "from-emerald-600 to-emerald-400 shadow-[var(--glow-green)]",
+-  amber: "from-amber-600 to-amber-400 shadow-[var(--glow-amber)]",
+-  pink: "from-pink-600 to-rose-400 shadow-[0_0_16px_rgba(244,114,182,0.4)]",
++  cyan: "from-[#861F41] to-[#861F41]",
++  purple: "from-[#2F5DA8] to-[#2F5DA8]",
++  green: "from-[#2E8B57] to-[#2E8B57]",
++  amber: "from-[#E5751F] to-[#E5751F]",
++  pink: "from-[#127A86] to-[#127A86]",
+ };
+ 
+ export function ProgressBar({
+diff --git a/src/types/contracts.ts b/src/types/contracts.ts
+index 0a1d89b..67b24c6 100644
+--- a/src/types/contracts.ts
++++ b/src/types/contracts.ts
+@@ -1,5 +1,5 @@
+ /**
+- * Hokie Pathfinder — Data Contracts
++ * Artemis — Data Contracts
+  * Structured JSON schemas for agent-to-agent handoffs.
+  */
+ 

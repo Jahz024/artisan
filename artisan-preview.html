@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Artemis: UI preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --paper: #e3e2de;
+    --paper-raised: #f5f4f1;
+    --paper-sunk: #d6d4cf;
+    --ink: #1d1a24;
+    --ink-soft: #4a4553;
+    --station: #ffffff;
+    --maroon: #861f41;
+    --orange: #e5751f;
+    --blue: #2f5da8;
+    --green: #2e8b57;
+    --teal: #127a86;
+    --danger: #c8322f;
+    --l0: #861f41; --l1: #e5751f; --l2: #2f5da8; --l3: #2e8b57; --l4: #127a86; --l5: #c99200;
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1b1920; --paper-raised: #25222b; --paper-sunk: #2e2a35;
+      --ink: #efece6; --ink-soft: #bdb8c2; --station: #25222b; --maroon: #c24a73; --l0: #d4567f; --l1: #f08a3c; --l2: #6b93e0; --l3: #4fbf83; --l4: #3fb3c0; --l5: #e3b53a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1b1920; --paper-raised: #25222b; --paper-sunk: #2e2a35;
+    --ink: #efece6; --ink-soft: #bdb8c2; --station: #25222b; --maroon: #c24a73; --l0: #d4567f; --l1: #f08a3c; --l2: #6b93e0; --l3: #4fbf83; --l4: #3fb3c0; --l5: #e3b53a;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); line-height: 1.5; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  header.bar { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 28px; }
+  .roundel { width: 34px; height: 34px; border-radius: 50%; border: 5px solid var(--maroon); background: var(--station); display: grid; place-items: center; }
+  .roundel span { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); }
+  .note { font-size: 14px; color: var(--ink-soft); }
+  h1 { font-family: var(--display); font-weight: 800; font-size: clamp(48px, 8vw, 88px); line-height: 0.95; margin: 24px 0 0; max-width: 12ch; }
+  h2 { font-family: var(--display); font-weight: 800; font-size: 40px; line-height: 1; margin: 0; }
+  .lede { font-size: 19px; color: var(--ink-soft); max-width: 58ch; margin: 20px 0 0; }
+  .hero-svg { width: 100%; height: auto; margin-top: 36px; display: block; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 28px; }
+  .btn { font-family: var(--display); font-weight: 700; font-size: 17px; border-radius: 999px; padding: 10px 22px; border: 2px solid var(--maroon); background: var(--maroon); color: #fff; cursor: pointer; }
+  .btn.secondary { background: var(--paper-raised); color: var(--ink); border-color: var(--ink); }
+  .btn:focus-visible, .station:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+  section.plan { margin-top: 80px; padding-bottom: 80px; }
+  .plan-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px; }
+  .key { margin-top: 20px; background: var(--paper-raised); border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 8px; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; font-size: 14px; color: var(--ink-soft); }
+  .key b { font-family: var(--display); font-size: 17px; color: var(--ink); }
+  .dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: -2px; margin-right: 6px; }
+  .canvas { margin-top: 12px; background: var(--paper-raised); border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 10px; overflow-x: auto; }
+  .canvas svg { display: block; }
+  .station { cursor: pointer; }
+  .station text { font-family: var(--display); font-weight: 700; paint-order: stroke; stroke: var(--paper-raised); stroke-width: 5px; stroke-linejoin: round; }
+  .detail { margin-top: 16px; background: var(--paper-raised); border-left: 6px solid var(--maroon); border-radius: 8px; padding: 16px 20px; min-height: 84px; }
+  .detail h3 { font-family: var(--display); font-weight: 800; font-size: 26px; margin: 0; }
+  .detail p { margin: 4px 0 0; color: var(--ink-soft); }
+  .station.draggable { cursor: grab; touch-action: none; }
+  .station.locked { cursor: not-allowed; }
+  @keyframes wiggle { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+  .wiggle { transform-box: fill-box; animation: wiggle .4s ease; }
+  .station.dragging { cursor: grabbing; }
+  .trash { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 120px); opacity: 0; transition: transform .25s cubic-bezier(.3,1.4,.5,1), opacity .2s, background .15s, color .15s; display: inline-flex; align-items: center; gap: 10px; border: 3px solid var(--ink); border-radius: 999px; padding: 12px 26px; font-family: var(--display); font-weight: 700; font-size: 19px; background: var(--paper-raised); color: var(--ink); box-shadow: 0 10px 30px rgba(29,26,36,.25); z-index: 20; pointer-events: none; }
+  .trash.show { transform: translate(-50%, 0); opacity: 1; }
+  .trash.over { background: var(--danger); color: #fff; transform: translate(-50%, 0) scale(1.08); }
+  .toast { position: fixed; left: 50%; top: calc(20px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -20px); opacity: 0; transition: .2s; background: var(--paper-raised); border: 2px solid var(--danger); color: var(--ink); border-radius: 10px; padding: 10px 16px; font-weight: 600; z-index: 30; max-width: min(90vw, 460px); text-align: center; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .modal-back { position: fixed; inset: 0; background: rgba(29,26,36,.4); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 40; }
+  .modal-back.show { display: flex; }
+  .modal { background: var(--paper-raised); border: 3px solid var(--ink); border-radius: 14px; width: min(520px, 100%); padding: 22px; }
+  .modal h3 { font-family: var(--display); font-weight: 800; font-size: 30px; margin: 0; line-height: 1; }
+  .modal > p { margin: 8px 0 16px; color: var(--ink-soft); }
+  .opt { display: flex; width: 100%; text-align: left; gap: 14px; align-items: center; background: var(--station); color: var(--ink); border: 2px solid color-mix(in srgb, var(--ink) 20%, transparent); border-radius: 10px; padding: 12px 14px; margin-top: 10px; cursor: pointer; font: inherit; }
+  .opt:hover, .opt:focus-visible { border-color: var(--ink); outline: none; }
+  .opt .score { font-family: var(--display); font-weight: 800; font-size: 26px; min-width: 44px; color: var(--maroon); }
+  .opt b { font-family: var(--display); font-size: 19px; display: block; }
+  .opt small { color: var(--ink-soft); font-size: 14px; }
+  .icon-btn { background: none; border: 2px solid color-mix(in srgb, var(--ink) 25%, transparent); color: var(--ink); border-radius: 999px; padding: 4px 12px; font: 600 14px var(--body); cursor: pointer; }
+  .prefs { margin-top: 20px; background: var(--paper-raised); border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 10px; padding: 18px; }
+  .prefs-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .prefs-head b { font-family: var(--display); font-size: 21px; }
+  .prefs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px 28px; margin-top: 14px; }
+  .field-label { display: block; font-family: var(--display); font-weight: 700; font-size: 17px; margin-bottom: 8px; }
+  .field-hint { font-size: 13px; color: var(--ink-soft); margin: 6px 0 0; }
+  .days { display: flex; flex-wrap: wrap; gap: 6px; }
+  .day { width: 42px; height: 42px; border-radius: 50%; border: 3px solid var(--ink); background: var(--station); color: var(--ink); font: 700 15px var(--display); cursor: pointer; }
+  .day[aria-pressed="true"] { background: var(--maroon); border-color: var(--maroon); color: #fff; }
+  .day:focus-visible, .prefs select:focus-visible, .prefs textarea:focus-visible, .prefs input:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+  .times { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .times label { font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+  .prefs select, .prefs textarea { width: 100%; margin-top: 4px; font: 500 15px var(--body); color: var(--ink); background: var(--station); border: 2px solid color-mix(in srgb, var(--ink) 25%, transparent); border-radius: 8px; padding: 8px 10px; }
+  .prefs textarea { min-height: 84px; resize: vertical; }
+  .credit-row { display: flex; align-items: baseline; gap: 10px; }
+  .credit-val { font: 800 40px/1 var(--display); }
+  .credit-status { font-weight: 700; font-size: 14px; color: var(--green); }
+  .credit-status.warn { color: var(--danger); }
+  .prefs input[type=range] { width: 100%; accent-color: var(--maroon); margin-top: 8px; }
+  .scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .prefs-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
+  .dirty { font-size: 14px; color: var(--ink-soft); }
+  .agents { margin-top: 20px; background: var(--paper-raised); border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 10px; padding: 14px 16px; }
+  .agents-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .agents-head b { font-family: var(--display); font-size: 21px; }
+  #agent-line { width: 100%; height: auto; display: block; margin-top: 4px; }
+  #agent-line text { font-family: var(--display); font-weight: 700; }
+  .train { transition: transform .7s cubic-bezier(.65,0,.35,1); }
+  .log { list-style: none; margin: 6px 0 0; padding: 0; max-height: 168px; overflow-y: auto; font-size: 15px; }
+  .log li { padding: 3px 0 3px 12px; border-left: 4px solid var(--c, var(--ink)); margin-top: 5px; animation: log-in .25s ease; }
+  .log li.handoff { font-weight: 700; }
+  .log li.issue { color: var(--danger); font-weight: 600; }
+  .log li.done { font-weight: 700; color: var(--green); }
+  @keyframes log-in { from { opacity: 0; transform: translateY(4px); } }
+  .slide { transition: transform .8s cubic-bezier(.3,1.3,.5,1); }
+  @keyframes alert-ring { 0%,100% { stroke-opacity: 1; } 50% { stroke-opacity: .25; } }
+  .alert-ring { animation: alert-ring .6s ease-in-out infinite; }
+  @keyframes snap { 0% { transform: scale(0); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+  .snap { transform-box: fill-box; transform-origin: center; animation: snap .4s cubic-bezier(.3,1.5,.5,1); }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  @keyframes live { 0% { stroke-width: 0; stroke-opacity: .6; } 100% { stroke-width: 18; stroke-opacity: 0; } }
+  .draw { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 2.2s cubic-bezier(.65,0,.35,1) forwards; }
+  .pop { transform-box: fill-box; transform-origin: center; transform: scale(0); animation: pop .45s ease-out forwards; }
+  .pulse { animation: live 1.8s ease-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .draw, .pop, .pulse, .snap, .alert-ring, .log li { animation: none; stroke-dashoffset: 0; transform: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bar">
+    <div class="brand"><span class="roundel" aria-hidden="true"><span></span></span>Artemis</div>
+    <span class="note">Design preview with sample data</span>
+  </header>
+
+  <h1>Map your route to graduation</h1>
+  <p class="lede">Upload your transcript and tell us how you like to learn. Five agents check VT requirements, years of past timetables, and professor ratings, then draw your degree as a map you can rearrange.</p>
+
+  <svg class="hero-svg" viewBox="0 0 1200 280" role="img" aria-label="A degree drawn as a transit line from CS 1114 to graduation">
+    <path class="draw" pathLength="1000" style="animation-delay:.35s" d="M 120 205 H 350 Q 362 205 370 197 L 442 125 Q 450 117 460 117" fill="none" stroke="var(--orange)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="draw" pathLength="1000" d="M 60 117 H 1080" fill="none" stroke="var(--maroon)" stroke-width="12" stroke-linecap="round"/>
+    <g id="hero-stations"></g>
+  </svg>
+
+  <div class="ctas">
+    <button class="btn" type="button">Sign in with Google</button>
+    <button class="btn secondary" type="button">Try the demo</button>
+  </div>
+
+  <section class="plan" aria-labelledby="plan-title">
+    <div class="plan-head">
+      <h2 id="plan-title">Sample plan: CS, class of 2028</h2>
+      <span class="note">Drag the open (upcoming) stations between semesters or to the trash. Completed and current courses are locked. <button class="icon-btn" id="mute" type="button">Sound on</button></span>
+    </div>
+    <form class="prefs" id="prefs" aria-labelledby="prefs-title" onsubmit="return false">
+      <div class="prefs-head">
+        <b id="prefs-title">Your preferences</b>
+        <span class="note">The Scheduler picks sections that fit these. Stations update as you change them.</span>
+      </div>
+      <div class="prefs-grid">
+        <fieldset style="border:0;padding:0;margin:0">
+          <legend class="field-label">Class days</legend>
+          <div class="days" id="days"></div>
+          <p class="field-hint">Tap a day to allow or block it.</p>
+        </fieldset>
+        <div>
+          <span class="field-label">Time window</span>
+          <div class="times">
+            <label>Earliest start
+              <select id="earliest"></select>
+            </label>
+            <label>Latest end
+              <select id="latest"></select>
+            </label>
+          </div>
+        </div>
+        <div>
+          <label class="field-label" for="credits">Credits per semester</label>
+          <div class="credit-row"><span class="credit-val" id="credit-val">15</span><span class="credit-status" id="credit-status">Balanced load</span></div>
+          <input type="range" id="credits" min="12" max="19" step="1" value="15" aria-describedby="credit-status">
+          <div class="scale" aria-hidden="true"><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span></div>
+        </div>
+        <div>
+          <label class="field-label" for="note">Anything else?</label>
+          <textarea id="note" placeholder="e.g., I work Tuesday afternoons, want a lighter spring, and I'm interested in machine learning."></textarea>
+        </div>
+      </div>
+      <div class="prefs-actions">
+        <button class="btn" id="rebuild" type="button">Rebuild my plan</button>
+        <button class="icon-btn" id="reset-prefs" type="button">Reset</button>
+        <span class="dirty" id="dirty" aria-live="polite"></span>
+      </div>
+    </form>
+    <div class="agents" aria-labelledby="agents-title">
+      <div class="agents-head">
+        <b id="agents-title">Agent activity</b>
+        <button class="btn secondary" id="replay" type="button">Watch the agents build this plan</button>
+      </div>
+      <svg id="agent-line" viewBox="0 0 960 96" role="img" aria-label="Agent pipeline: Requirements, Professors, Scheduler, Verifier, Presentation"></svg>
+      <ol class="log" id="log" aria-live="polite"></ol>
+    </div>
+    <div class="key">
+      <b>Map key</b>
+      <span><span class="dot" style="background:var(--ink);border:2px solid var(--ink)"></span>Completed (locked)</span>
+      <span><span class="dot" style="background:var(--orange);border:3px solid var(--ink)"></span>Taking now (locked)</span>
+      <span><span class="dot" style="background:var(--station);border:4px solid var(--maroon)"></span>Next semester</span>
+      <span><span class="dot" style="background:var(--station);border:3px solid var(--ink)"></span>Planned</span>
+      <span><span class="dot" style="background:var(--station);border:3px dashed var(--ink)"></span>Estimate</span>
+    </div>
+    <div class="canvas"><svg id="map" role="group" aria-label="Degree plan map"></svg></div>
+    <div class="detail" id="detail" aria-live="polite">
+      <h3>Select a station</h3>
+      <p>Course details, professor ratings, and alternatives appear here in the real app.</p>
+    </div>
+  </section>
+</div>
+<div class="trash" id="trash" aria-hidden="true">🗑 <span id="trash-label">Drop here to remove</span></div>
+<div class="toast" id="toast" role="status"></div>
+<div class="modal-back" id="modal-back">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h3 id="modal-title">Replace course</h3>
+    <p id="modal-sub"></p>
+    <div id="opts"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+
+  // Hero stations
+  var hs = document.getElementById("hero-stations");
+  var stops = [
+    { x: 60, y: 117, l: "CS 1114", s: "done" }, { x: 250, y: 117, l: "CS 2114", s: "done" },
+    { x: 460, y: 117, l: "CS 3114", s: "now" }, { x: 680, y: 117, l: "CS 3214" }, { x: 900, y: 117, l: "Capstone" },
+    { x: 120, y: 205, l: "MATH 1225", s: "done", below: true }, { x: 300, y: 205, l: "MATH 2534", s: "done", below: true }
+  ];
+  stops.forEach(function (s, i) {
+    var d = (0.5 + i * 0.2) + "s";
+    el("circle", { class: "pop", style: "animation-delay:" + d, cx: s.x, cy: s.y, r: s.s === "now" ? 15 : 12,
+      fill: s.s === "done" ? "var(--ink)" : s.s === "now" ? "var(--orange)" : "var(--station)", stroke: "var(--ink)", "stroke-width": s.s === "now" ? 5 : 4 }, hs);
+    var t = el("text", { class: "pop", style: "animation-delay:" + d + ";font-family:var(--display);font-weight:700;font-size:22px",
+      x: s.x, y: s.below ? s.y + 40 : s.y - 33, "text-anchor": "middle", fill: "var(--ink)" }, hs);
+    t.textContent = s.l;
+    if (s.s === "now") {
+      var y = el("text", { class: "pop", style: "animation-delay:" + d + ";font-size:15px;font-weight:600", x: s.x, y: s.y + 43, "text-anchor": "middle", fill: "var(--ink-soft)" }, hs);
+      y.textContent = "You are here";
+    }
+  });
+  var term = el("g", { class: "pop", style: "animation-delay:1.9s" }, hs);
+  el("rect", { x: 1080, y: 93, width: 48, height: 48, rx: 24, fill: "var(--station)", stroke: "var(--ink)", "stroke-width": 6 }, term);
+  el("circle", { cx: 1104, cy: 117, r: 9, fill: "var(--maroon)" }, term);
+  var gt = el("text", { class: "pop", style: "animation-delay:1.9s;font-family:var(--display);font-weight:800;font-size:26px", x: 1104, y: 78, "text-anchor": "middle", fill: "var(--maroon)" }, hs);
+  gt.textContent = "Graduation";
+
+  // ─── Sample plan (interactive) ───
+  var terms = ["Fall 2025", "Spring 2026", "Fall 2026", "Spring 2027", "Fall 2027", "Spring 2028"];
+  var NOW = 2;
+  var SEED = [
+    { id: "CS1114", t: 0, y: 130, s: "completed", title: "Intro to Software Design", cr: 3 },
+    { id: "CS2114", t: 1, y: 130, s: "completed", title: "Software Design & Data Structures", cr: 3 },
+    { id: "CS3114", t: 2, y: 130, s: "in_progress", title: "Data Structures & Algorithms", cr: 3, rating: 4.2, note: "Taking now with a 4.2-rated instructor." },
+    { id: "CS3214", t: 3, y: 130, s: "planned_next", title: "Computer Systems", cr: 3, req: true, rating: 3.9,
+      sec: { d: ["T", "Th"], s: 18.5, e: 19.75 }, alt: { d: ["M", "W"], s: 11.25, e: 12.5 }, note: "Evening section fits your preference. Historically offered every spring." },
+    { id: "CS4284", t: 4, y: 130, s: "planned_future", title: "Systems & Networking Capstone", cr: 3, rating: 4.4 },
+    { id: "MATH1225", t: 0, y: 220, s: "completed", title: "Calculus of a Single Variable", cr: 4 },
+    { id: "MATH2534", t: 1, y: 220, s: "completed", title: "Discrete Mathematics", cr: 3 },
+    { id: "CS2505", t: 2, y: 220, s: "in_progress", title: "Intro to Computer Organization I", cr: 3, rating: 3.6 },
+    { id: "CS2506", t: 3, y: 220, s: "planned_next", title: "Intro to Computer Organization II", cr: 3, req: true, rating: 4.0,
+      sec: { d: ["M", "W", "F"], s: 10.17, e: 11 }, alt: { d: ["M", "W"], s: 13.25, e: 14.5 } },
+    { id: "STAT4705", t: 3, y: 310, s: "planned_next", title: "Probability & Statistics for Engineers", cr: 3, rating: 3.3,
+      sec: { d: ["M", "W", "F"], s: 8, e: 8.83 }, alt: { d: ["T", "Th"], s: 12.5, e: 13.75 } },
+    { id: "CS4804", t: 4, y: 310, s: "planned_future", title: "Intro to Artificial Intelligence", cr: 3, rating: 4.6, note: "Matches your interest in machine learning." },
+    { id: "CS3704", t: 3, y: 400, s: "planned_next", title: "Intermediate Software Design", cr: 3, rating: 4.1,
+      sec: { d: ["T", "Th"], s: 14, e: 15.25 }, alt: { d: ["M", "W"], s: 17.5, e: 18.75 } },
+    { id: "CS4704", t: 5, y: 400, s: "planned_future", title: "Software Engineering Capstone", cr: 3, low: true, rating: 4.3, note: "Estimate: offered in 3 of the last 4 springs, never in fall." },
+    { id: "CS4644", t: 4, y: 520, s: "planned_future", title: "Creative Computing Studio", cr: 3, low: true, elective: true, rating: 4.8 },
+    { id: "CS4624", t: 5, y: 520, s: "planned_future", title: "Multimedia, Hypertext & Info Access", cr: 3, elective: true, rating: 4.0 }
+  ];
+  var EDGE_SEED = [["CS1114","CS2114"],["CS2114","CS3114"],["CS3114","CS3214"],["CS3214","CS4284"],
+    ["MATH1225","MATH2534"],["MATH2534","CS2505"],["CS2505","CS2506"],["CS2506","CS3214"],
+    ["CS3114","CS4804"],["STAT4705","CS4804"],["CS2114","CS3704"],["CS3704","CS4704"],["CS3214","CS4704"]];
+  var courses, edges;
+  function resetData() {
+    courses = SEED.map(function (c) { return JSON.parse(JSON.stringify(c)); });
+    edges = EDGE_SEED.map(function (e) { return e.slice(); });
+  }
+  resetData();
+
+  var ALTS = {
+    CS3214: [["CS3214", "Evening section, Prof. Back", 91, "Same course, later time"], ["CS3214", "Morning section, Prof. Kim", 78, "Higher rating, but 8 AM"]],
+    CS2506: [["CS2506", "Section 2, Prof. Ribbens", 88, "Fits your Tue/Thu preference"], ["CS2506", "Online section", 74, "Flexible, lower instructor rating"]],
+    DEFAULT: [["CS4674", "Computer Vision", 90, "Strong ML overlap, rated 4.5"], ["CS4264", "Principles of Computer Security", 84, "Evening section every fall"], ["CS4784", "Human-Computer Interaction", 79, "Lighter workload per reviews"]]
+  };
+  var TITLES = { CS4674: "Computer Vision", CS4264: "Principles of Computer Security", CS4784: "Human-Computer Interaction" };
+  var PALETTE = ["var(--l0)", "var(--l1)", "var(--l2)", "var(--l3)", "var(--l4)", "var(--l5)"];
+  var COLW = 250, X0 = 90, R = 13, W = X0 + terms.length * COLW + 40, H = 600;
+  var svg = document.getElementById("map");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  var labels = { completed: "Completed", in_progress: "Taking now", planned_next: "Next semester", planned_future: "Planned" };
+  var byId, line, branched = {}, edgeEls, stEls, justPlaced = null;
+  // Build state: null when the plan is finished and editable. While agents
+  // work, it controls which parts of the map exist yet.
+  var B = null;
+
+  function code(id) { return id.replace(/^([A-Z]+)(\d+)/, "$1 $2"); }
+  function statusFor(t) { return t < NOW ? "completed" : t === NOW ? "in_progress" : t === NOW + 1 ? "planned_next" : "planned_future"; }
+
+  // ─── Preferences ───
+  var DAY_NAMES = { M: "Mon", T: "Tue", W: "Wed", Th: "Thu", F: "Fri", Sa: "Sat", Su: "Sun" };
+  var DEFAULT_P = { days: { M: 1, T: 1, W: 1, Th: 1, F: 1, Sa: 0, Su: 0 }, earliest: 10, latest: 24, credits: 15, note: "" };
+  var P = JSON.parse(JSON.stringify(DEFAULT_P));
+  function fmtTime(h) {
+    var hr = Math.floor(h), m = Math.round((h - hr) * 60), ap = hr >= 12 ? "PM" : "AM", h12 = hr % 12 || 12;
+    return h12 + (m ? ":" + (m < 10 ? "0" : "") + m : "") + " " + ap;
+  }
+  function fmtSec(sec) { return sec.d.map(function (d) { return DAY_NAMES[d]; }).join("/") + " " + fmtTime(sec.s); }
+  function fits(sec) {
+    return sec.d.every(function (d) { return P.days[d]; }) && sec.s >= P.earliest && sec.e <= P.latest;
+  }
+  function whyNot(sec) {
+    var bad = sec.d.filter(function (d) { return !P.days[d]; });
+    if (bad.length) return "meets on " + bad.map(function (d) { return DAY_NAMES[d]; }).join("/");
+    if (sec.s < P.earliest) return "starts before " + fmtTime(P.earliest);
+    return "ends after " + fmtTime(P.latest);
+  }
+  function overlaps(a, b) {
+    return a.d.some(function (d) { return b.d.indexOf(d) >= 0; }) && a.s < b.e && b.s < a.e;
+  }
+  function conflictsFor(c, sec) {
+    return courses.filter(function (o) { return o !== c && o.sec && o.t === c.t && overlaps(sec, o.sec); });
+  }
+  function describeP() {
+    var days = Object.keys(DAY_NAMES).filter(function (d) { return P.days[d]; }).map(function (d) { return DAY_NAMES[d]; });
+    return (days.length ? days.join(", ") : "no days") + "; " + fmtTime(P.earliest) + " to " +
+      (P.latest >= 24 ? "any time" : fmtTime(P.latest)) + "; " + P.credits + " credits per term";
+  }
+
+  (function buildPrefsUI() {
+    var daysEl = document.getElementById("days");
+    Object.keys(DAY_NAMES).forEach(function (d) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "day"; b.textContent = d;
+      b.setAttribute("aria-label", DAY_NAMES[d]); b.dataset.day = d;
+      b.addEventListener("click", function () { P.days[d] = P.days[d] ? 0 : 1; syncPrefs(true); });
+      daysEl.appendChild(b);
+    });
+    var e = document.getElementById("earliest"), l = document.getElementById("latest");
+    [7, 8, 9, 10, 11, 12].forEach(function (h) { e.add(new Option(fmtTime(h) + (h === 8 ? " (8 AMs ok)" : ""), h)); });
+    [15, 16, 17, 18, 19, 20, 21].forEach(function (h) { l.add(new Option(fmtTime(h), h)); });
+    l.add(new Option("No limit", 24));
+    e.addEventListener("change", function () { P.earliest = +e.value; syncPrefs(true); });
+    l.addEventListener("change", function () { P.latest = +l.value; syncPrefs(true); });
+    var cr = document.getElementById("credits");
+    cr.addEventListener("input", function () { P.credits = +cr.value; syncPrefs(true); });
+    var note = document.getElementById("note");
+    note.addEventListener("input", function () { P.note = note.value; markDirty(); });
+    document.getElementById("rebuild").addEventListener("click", function () { runBuild(); });
+    document.getElementById("reset-prefs").addEventListener("click", function () {
+      P = JSON.parse(JSON.stringify(DEFAULT_P)); note.value = ""; syncPrefs(true);
+    });
+  })();
+  function markDirty() {
+    document.getElementById("dirty").textContent = running ? "" : "Changed. Rebuild to let the agents re-pick sections.";
+  }
+  function syncPrefs(changed) {
+    document.querySelectorAll(".day").forEach(function (b) { b.setAttribute("aria-pressed", P.days[b.dataset.day] ? "true" : "false"); });
+    document.getElementById("earliest").value = P.earliest;
+    document.getElementById("latest").value = P.latest;
+    document.getElementById("credits").value = P.credits;
+    document.getElementById("credit-val").textContent = P.credits;
+    var st = document.getElementById("credit-status");
+    var label = P.credits === 12 ? "Minimum for full-time" : P.credits <= 16 ? "Balanced load" : P.credits <= 18 ? "Heavy load" : "Maximum without approval";
+    st.textContent = label; st.classList.toggle("warn", P.credits >= 19);
+    if (changed) { markDirty(); if (typeof draw === "function" && svg) draw(); }
+  }
+
+  // ─── Sound ───
+  var muted = false, actx = null;
+  function tone(freq, start, dur, type, vol) {
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, actx.currentTime + start);
+    g.gain.setValueAtTime(vol, actx.currentTime + start);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + start + dur);
+    o.connect(g).connect(actx.destination); o.start(actx.currentTime + start); o.stop(actx.currentTime + start + dur);
+  }
+  function sound(kind) {
+    if (muted) return;
+    try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    if (actx.state === "suspended") actx.resume();
+    if (kind === "snap") { tone(880, 0, .08, "triangle", .25); tone(1320, .06, .14, "triangle", .2); tone(1760, .12, .2, "sine", .12); }
+    if (kind === "trash") { tone(300, 0, .18, "sawtooth", .12); tone(160, .08, .25, "sawtooth", .1); }
+    if (kind === "error") { tone(220, 0, .12, "square", .1); tone(185, .12, .18, "square", .1); }
+    if (kind === "lift") { tone(660, 0, .05, "sine", .12); }
+    if (kind === "tick") { tone(1200, 0, .03, "sine", .05); }
+    if (kind === "handoff") { tone(523, 0, .1, "triangle", .15); tone(784, .09, .16, "triangle", .13); }
+    if (kind === "done") { tone(523, 0, .12, "triangle", .18); tone(659, .1, .12, "triangle", .18); tone(784, .2, .12, "triangle", .18); tone(1047, .3, .35, "sine", .15); }
+  }
+  document.getElementById("mute").addEventListener("click", function () {
+    muted = !muted; this.textContent = muted ? "Sound off" : "Sound on";
+  });
+
+  function toast(msg) {
+    var t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast.timer); toast.timer = setTimeout(function () { t.classList.remove("show"); }, 2800);
+  }
+
+  function computeLines() {
+    byId = {}; courses.forEach(function (c) { c.x = X0 + c.t * COLW; byId[c.id] = c; });
+    var parents = {}; edges.forEach(function (e) { (parents[e[1]] = parents[e[1]] || []).push(e[0]); });
+    line = {}; branched = {}; var next = 0, continued = {};
+    // A course continues its parent's line only if that parent hasn't already
+    // passed its color on. Branches start a new color, so each route on the
+    // map is visibly its own line instead of everything inheriting maroon.
+    courses.filter(function (c) { return !c.elective; }).sort(function (a, b) { return a.t - b.t || a.y - b.y; }).forEach(function (c) {
+      var all = (parents[c.id] || []).filter(function (p) { return p in line; });
+      var ps = all.filter(function (p) { return !continued[p]; });
+      if (!ps.length) { line[c.id] = next++; if (all.length) branched[c.id] = true; return; }
+      ps.sort(function (a, b) { return Math.abs(byId[a].y - c.y) - Math.abs(byId[b].y - c.y); });
+      line[c.id] = line[ps[0]];
+      continued[ps[0]] = true;
+    });
+  }
+
+  // Continuing track keeps its color; a branch takes the new line's color as it
+  // leaves; a transfer into an existing line keeps the color it came from.
+  function edgeLine(e) {
+    var a = line[e[0]] || 0, b = line[e[1]];
+    if (b === undefined || a === b) return a;
+    return branched[e[1]] ? b : a;
+  }
+
+  function transit(a, b) {
+    var dx = b.x - a.x, dy = b.y - a.y;
+    if (dx < 30) return "M " + a.x + " " + a.y + " L " + b.x + " " + b.y;
+    if (Math.abs(dy) < 1) return "M " + a.x + " " + a.y + " H " + b.x;
+    var diag = Math.min(Math.abs(dy), Math.max(0, dx - 36)), run = (dx - diag) / 2, sg = dy > 0 ? 1 : -1;
+    var ax = a.x + run, bx = ax + diag, by = a.y + sg * diag, r = Math.min(10, run, diag / 2 || 10);
+    var p = ["M", a.x, a.y, "H", ax - r, "Q", ax, a.y, ax + r * .7, a.y + sg * r * .7];
+    if (Math.abs(b.y - by) > 1) p.push("L", bx - r * .4, by - sg * r * .4, "Q", bx, by, bx, by + sg * r, "V", b.y - sg * r, "Q", bx, b.y, bx + r, b.y);
+    else p.push("L", bx - r * .7, by - sg * r * .7, "Q", bx, by, bx + r, by);
+    p.push("H", b.x);
+    return p.join(" ");
+  }
+
+  function draw() {
+    computeLines();
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var showHere = !B || B.here;
+    terms.forEach(function (t, i) {
+      var x = X0 - 50 + i * COLW, isNow = i === NOW && showHere;
+      el("rect", { x: x, y: 0, width: COLW, height: H,
+        fill: isNow ? "rgba(229,117,31,.1)" : i % 2 === 0 ? "var(--paper-sunk)" : "transparent", opacity: isNow ? 1 : .45 }, svg);
+      var credits = courses.filter(function (c) { return c.t === i && (!B || B.stations[c.id]); }).reduce(function (s, c) { return s + c.cr; }, 0);
+      var h = el("text", { x: x + 16, y: 44, fill: "var(--ink)", style: "font-family:var(--display);font-weight:800;font-size:23px" }, svg);
+      h.textContent = t;
+      var cr = el("text", { x: x + 16, y: 64, fill: credits > 19 ? "var(--danger)" : "var(--ink-soft)", style: "font-size:13px;font-weight:600" }, svg);
+      var future = i > NOW;
+      var over = future ? credits > P.credits : credits > 19;
+      cr.setAttribute("fill", over ? "var(--danger)" : "var(--ink-soft)");
+      cr.textContent = future ? credits + " of " + P.credits + " credits" + (over ? ", over target" : "") : credits + " credits";
+      if (isNow) {
+        var g = el("g", { transform: "translate(" + (x + 100) + ",59)", class: B && B.freshHere ? "pop" : "" }, svg);
+        el("circle", { r: 7, fill: "var(--orange)", stroke: "var(--ink)", "stroke-width": 2 }, g);
+        var yh = el("text", { x: 13, y: 4, fill: "var(--ink)", style: "font-size:13px;font-weight:700" }, g);
+        yh.textContent = "You are here";
+      }
+    });
+    el("rect", { id: "drop-hl", x: 0, y: 0, width: COLW, height: H, fill: "none", stroke: "var(--maroon)", "stroke-width": 3, "stroke-dasharray": "8 6", rx: 8, opacity: 0 }, svg);
+    var el1 = el("text", { x: 24, y: 470, fill: "var(--ink-soft)", style: "font-family:var(--display);font-weight:700;font-size:17px" }, svg);
+    el1.textContent = "Electives";
+    el("path", { d: "M 24 482 H " + (W - 40), stroke: "var(--ink)", "stroke-width": 2, "stroke-dasharray": "2 7", opacity: .4, fill: "none" }, svg);
+
+    edgeEls = [];
+    edges.forEach(function (e, i) {
+      var key = e[0] + ">" + e[1];
+      if (B && !B.lines[key]) return;
+      var a = byId[e[0]], b = byId[e[1]];
+      var g = el("g", {}, svg);
+      var d = transit({ x: a.x + R, y: a.y }, { x: b.x - R, y: b.y });
+      var fresh = B && B.freshLines[key];
+      var cls = fresh ? { class: "draw", pathLength: 1000 } : {};
+      var casing = el("path", Object.assign({ d: d, fill: "none", stroke: "var(--paper-raised)", "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, cls), g);
+      var traveled = a.s === "completed" && b.s === "completed";
+      var p = el("path", Object.assign({ d: d, fill: "none", stroke: PALETTE[edgeLine(e) % PALETTE.length], "stroke-width": 5,
+        "stroke-linecap": "round", "stroke-linejoin": "round", opacity: traveled ? .4 : .95, style: "transition:opacity .18s, stroke-width .18s" }, cls), g);
+      if (fresh) { casing.style.animationDuration = p.style.animationDuration = ".9s"; }
+      edgeEls.push({ e: e, g: g, p: p, casing: casing, base: traveled ? .4 : .95 });
+    });
+
+    stEls = {};
+    courses.forEach(function (c) {
+      if (B && !B.stations[c.id]) return;
+      var editable = !B;
+      var movable = editable && c.s !== "completed" && c.s !== "in_progress";
+      var g = el("g", { class: "station" + (movable ? " draggable" : editable ? " locked" : ""), tabindex: editable ? 0 : -1, role: "button",
+        "aria-label": code(c.id) + ", " + c.title + ", " + labels[c.s] + (movable ? ". Drag to move, or press Delete to replace." : ". Locked.") }, svg);
+      if (B && B.slideFrom && B.slideFrom.id === c.id) {
+        g.setAttribute("class", g.getAttribute("class") + " slide");
+        g.style.transform = "translateX(" + B.slideFrom.dx + "px)";
+        requestAnimationFrame(function () { requestAnimationFrame(function () { g.style.transform = "translateX(0)"; }); });
+      }
+      var inner = el("g", {}, g);
+      if (c.id === justPlaced || (B && B.freshStations[c.id])) inner.setAttribute("class", B ? "pop" : "snap");
+      var typed = !B || B.status;
+      if (typed && c.s === "in_progress") el("circle", { class: "pulse", cx: c.x, cy: c.y, r: R, fill: "none", stroke: "var(--orange)" }, inner);
+      var fill = !typed ? "var(--station)" : c.s === "completed" ? "var(--ink)" : c.s === "in_progress" ? "var(--orange)" : "var(--station)";
+      var stroke = typed && c.s === "planned_next" ? "var(--maroon)" : typed ? "var(--ink)" : "var(--ink-soft)";
+      var sw = !typed ? 2 : c.s === "planned_next" ? 4 : c.s === "completed" ? 2 : 3;
+      var attrs = { cx: c.x, cy: c.y, r: R, fill: fill, stroke: stroke, "stroke-width": sw, style: "transition: fill .4s, stroke .4s" };
+      if (c.low || !typed) attrs["stroke-dasharray"] = "4 3";
+      el("circle", attrs, inner);
+      if (typed && c.s === "completed") {
+        el("path", { d: "M " + (c.x - 5) + " " + c.y + " l 3.5 3.5 l 6.5 -7", fill: "none", stroke: "var(--paper-raised)",
+          "stroke-width": 2.5, "stroke-linecap": "round", "stroke-linejoin": "round" }, inner);
+      }
+      if (B && B.alert === c.id) {
+        el("circle", { class: "alert-ring", cx: c.x, cy: c.y, r: R + 7, fill: "none", stroke: "var(--danger)", "stroke-width": 3 }, inner);
+        var badge = el("g", { transform: "translate(" + (c.x + 10) + "," + (c.y - 12) + ")" }, inner);
+        el("circle", { r: 8, fill: "var(--danger)" }, badge);
+        var bang = el("text", { y: 4, "text-anchor": "middle", fill: "#fff", style: "font-size:12px;font-weight:800" }, badge);
+        bang.textContent = "!";
+      }
+      var t = el("text", { x: c.x + R + 8, y: c.y + 5, fill: c.s === "completed" ? "var(--ink-soft)" : "var(--ink)", style: "font-size:16px" }, inner);
+      t.textContent = code(c.id);
+      var crt = el("tspan", { dx: 6, fill: "var(--ink-soft)", style: "font-size:12px;font-weight:600" }, t);
+      crt.textContent = c.cr + " cr";
+      if (c.rating && c.s !== "completed" && (!B || B.ratings)) {
+        var rt = el("text", { x: c.x + R + 8, y: c.y + 23, fill: "var(--ink-soft)", class: B && B.freshRatings ? "pop" : "",
+          style: "font-size:12px;font-weight:600;font-family:var(--body)" }, inner);
+        rt.textContent = "★ " + c.rating.toFixed(1) + " professor";
+      }
+      // Next semester has real sections: show the chosen time and whether it fits the filters.
+      if (c.sec && c.t === NOW + 1 && (!B || B.status)) {
+        var ok = fits(c.sec);
+        var tt = el("text", { x: c.x + R + 8, y: c.y + 40, fill: ok ? "var(--ink-soft)" : "var(--danger)",
+          style: "font-size:12px;font-weight:" + (ok ? 600 : 700) + ";font-family:var(--body)" }, inner);
+        tt.textContent = (ok ? "✓ " : "✕ ") + fmtSec(c.sec) + (ok ? "" : ", " + whyNot(c.sec));
+      }
+      stEls[c.id] = g;
+      if (!editable) return;
+      g.addEventListener("mouseenter", function () { if (!drag) trace(c.id); });
+      g.addEventListener("mouseleave", function () { if (!drag) trace(null); });
+      g.addEventListener("focus", function () { trace(c.id); show(c); });
+      g.addEventListener("blur", function () { trace(null); });
+      g.addEventListener("keydown", function (ev) {
+        if ((ev.key === "Delete" || ev.key === "Backspace") && movable) { ev.preventDefault(); trashCourse(c.id); }
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); show(c); }
+      });
+      if (movable) g.addEventListener("pointerdown", function (ev) { startDrag(ev, c, g); });
+      else g.addEventListener("pointerdown", function (ev) { lockedNudge(ev, c, inner); });
+    });
+    justPlaced = null;
+    if (B) { B.freshLines = {}; B.freshStations = {}; B.freshRatings = false; B.freshHere = false; B.slideFrom = null; }
+  }
+
+  function chain(id) {
+    var set = {}; set[id] = 1;
+    function walk(cur, dir) {
+      edges.forEach(function (e) {
+        var from = dir ? e[0] : e[1], to = dir ? e[1] : e[0];
+        if (from === cur && !set[to]) { set[to] = 1; walk(to, dir); }
+      });
+    }
+    walk(id, true); walk(id, false);
+    return set;
+  }
+  function trace(id) {
+    var set = id ? chain(id) : null;
+    edgeEls.forEach(function (x) {
+      var on = set && set[x.e[0]] && set[x.e[1]];
+      x.p.setAttribute("opacity", !set ? x.base : on ? 1 : .12);
+      x.p.setAttribute("stroke-width", on ? 7 : 5);
+      x.casing.setAttribute("opacity", set && !on ? 0 : 1);
+    });
+    Object.keys(stEls).forEach(function (k) { stEls[k].style.opacity = !set || set[k] ? 1 : .35; });
+  }
+  function show(c, extra) {
+    var d = document.getElementById("detail");
+    d.style.borderLeftColor = c.elective ? "var(--ink-soft)" : PALETTE[(line[c.id] || 0) % PALETTE.length];
+    d.innerHTML = "";
+    var h = document.createElement("h3"); h.textContent = code(c.id) + ": " + c.title; d.appendChild(h);
+    var p = document.createElement("p"); p.textContent = labels[c.s] + ", " + terms[c.t] + ", " + c.cr + " credits"; d.appendChild(p);
+    if (c.sec && c.t === NOW + 1) {
+      var sp = document.createElement("p");
+      sp.textContent = "Section: " + fmtSec(c.sec) + "–" + fmtTime(c.sec.e) + (fits(c.sec) ? ", fits your filters." : ". Doesn't fit: it " + whyNot(c.sec) + ".");
+      d.appendChild(sp);
+    }
+    var note = extra || c.note;
+    if (note) { var n = document.createElement("p"); n.textContent = note; d.appendChild(n); }
+  }
+
+  // ─── Drag and drop ───
+  var drag = null, trashEl = document.getElementById("trash"), trashLabel = document.getElementById("trash-label");
+  function svgPoint(ev) {
+    var pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function overTrash(ev) {
+    var r = trashEl.getBoundingClientRect(), pad = 24;
+    return ev.clientX > r.left - pad && ev.clientX < r.right + pad && ev.clientY > r.top - pad && ev.clientY < r.bottom + pad;
+  }
+  function startDrag(ev, c, g) {
+    ev.preventDefault();
+    var p = svgPoint(ev);
+    drag = { c: c, g: g, x0: p.x, y0: p.y, moved: false };
+    // Listen on window: re-appending the dragged station would drop pointer capture.
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+  }
+  function onMove(ev) {
+    if (!drag) return;
+    var p = svgPoint(ev), dx = p.x - drag.x0, dy = p.y - drag.y0;
+    if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+    if (!drag.moved) {
+      drag.moved = true; sound("lift"); trace(drag.c.id);
+      drag.g.classList.add("dragging"); svg.appendChild(drag.g);
+      trashEl.classList.add("show");
+    }
+    drag.g.setAttribute("transform", "translate(" + dx + "," + dy + ")");
+    var over = overTrash(ev);
+    trashEl.classList.toggle("over", over);
+    trashLabel.textContent = over ? "Release to remove this stop" : "Drop here to remove";
+    var col = Math.max(0, Math.min(terms.length - 1, Math.round((p.x - X0) / COLW)));
+    var hl = document.getElementById("drop-hl");
+    hl.setAttribute("x", X0 - 50 + col * COLW); hl.setAttribute("opacity", over ? 0 : 1);
+  }
+  function endDragUI() { trashEl.classList.remove("show", "over"); trashLabel.textContent = "Drop here to remove"; }
+  function detach() {
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onCancel);
+  }
+  function onCancel() { detach(); endDragUI(); drag = null; draw(); }
+  function onUp(ev) {
+    if (!drag) return;
+    var d = drag; drag = null;
+    detach(); endDragUI();
+    if (!d.moved) { draw(); show(byId[d.c.id]); return; }
+    if (overTrash(ev)) { trashCourse(d.c.id); return; }
+    var p = svgPoint(ev);
+    moveCourse(d.c, Math.max(0, Math.min(terms.length - 1, Math.round((p.x - X0) / COLW))));
+  }
+
+  function lockedNudge(ev, c, inner) {
+    ev.preventDefault();
+    show(c);
+    inner.classList.remove("wiggle"); void inner.getBBox(); inner.classList.add("wiggle");
+    sound("error");
+    toast(code(c.id) + (c.s === "completed" ? " is already completed, so it's locked." : " is in progress this semester, so it's locked.") +
+      " Drag an open station instead.");
+  }
+
+  function moveCourse(c, col) {
+    if (col === c.t) { draw(); return; }
+    if (col <= NOW) { sound("error"); toast("Past and current semesters are locked. Pick a future semester."); draw(); return; }
+    for (var i = 0; i < edges.length; i++) {
+      var e = edges[i];
+      if (e[1] === c.id && byId[e[0]].t >= col) { sound("error"); toast("Can't move " + code(c.id) + " to " + terms[col] + ": it must come after " + code(e[0]) + "."); draw(); flash(e[0]); return; }
+      if (e[0] === c.id && byId[e[1]].t <= col) { sound("error"); toast("Can't move " + code(c.id) + " to " + terms[col] + ": it must come before " + code(e[1]) + "."); draw(); flash(e[1]); return; }
+    }
+    c.t = col; c.s = statusFor(col);
+    while (courses.some(function (o) { return o !== c && o.t === c.t && o.y === c.y; })) c.y += 90;
+    justPlaced = c.id; sound("snap"); draw(); show(c);
+  }
+  function flash(id) {
+    var g = stEls[id]; if (!g) return;
+    var circ = g.querySelector("circle:not(.pulse)");
+    circ.setAttribute("stroke", "var(--danger)"); circ.setAttribute("stroke-width", 5);
+    setTimeout(function () { draw(); }, 900);
+  }
+
+  // ─── Trash → ranked replacements → snap back in ───
+  var pending = null;
+  function trashCourse(id) {
+    var c = byId[id];
+    pending = { c: c, edgesIn: edges.filter(function (e) { return e[1] === id; }), edgesOut: edges.filter(function (e) { return e[0] === id; }) };
+    courses = courses.filter(function (o) { return o.id !== id; });
+    edges = edges.filter(function (e) { return e[0] !== id && e[1] !== id; });
+    sound("trash"); draw();
+    var opts = ALTS[id] || ALTS.DEFAULT;
+    document.getElementById("modal-title").textContent = "Replace " + code(id);
+    document.getElementById("modal-sub").textContent = (c.req || pending.edgesOut.length)
+      ? "This course is required for later classes, so pick a substitute. Ranked by your preferences and professor ratings."
+      : "Pick a replacement, ranked by your preferences and professor ratings.";
+    var box = document.getElementById("opts"); box.innerHTML = "";
+    opts.forEach(function (o) {
+      var b = document.createElement("button"); b.className = "opt"; b.type = "button";
+      b.innerHTML = '<span class="score"></span><span><b></b><small></small></span>';
+      b.querySelector(".score").textContent = o[2];
+      b.querySelector("b").textContent = code(o[0]) + ": " + o[1];
+      b.querySelector("small").textContent = o[3];
+      b.addEventListener("click", function () { choose(o); });
+      box.appendChild(b);
+    });
+    document.getElementById("modal-back").classList.add("show");
+    box.querySelector("button").focus();
+  }
+  function choose(o) {
+    var c = pending.c, newId = o[0];
+    var nc = { id: newId, t: c.t, y: c.y, s: c.s, cr: 3, elective: c.elective, rating: 4.1,
+      title: o[0] === c.id ? c.title : (TITLES[o[0]] || o[1]), note: o[1] + ". " + o[3] + "." };
+    if (byId[newId] && newId !== c.id) nc.id = newId + "b";
+    courses.push(nc);
+    pending.edgesIn.forEach(function (e) { edges.push([e[0], nc.id]); });
+    pending.edgesOut.forEach(function (e) { edges.push([nc.id, e[1]]); });
+    pending = null;
+    document.getElementById("modal-back").classList.remove("show");
+    justPlaced = nc.id; sound("snap"); draw(); show(nc);
+  }
+
+  // ─── Agent pipeline: a small transit line of its own ───
+  var AGENTS = [
+    { id: "req", name: "Requirements", color: "#861F41" },
+    { id: "prof", name: "Professors", color: "#2F5DA8" },
+    { id: "sched", name: "Scheduler", color: "#2E8B57" },
+    { id: "ver", name: "Verifier", color: "#C99200" },
+    { id: "pres", name: "Presentation", color: "#127A86" }
+  ];
+  var AX = function (i) { return 70 + i * 205; }, AY = 36;
+  var agentSvg = document.getElementById("agent-line"), agentEls = {}, train;
+  (function buildAgentLine() {
+    el("path", { d: "M " + AX(0) + " " + AY + " H " + AX(4), stroke: "var(--paper-sunk)", "stroke-width": 8, "stroke-linecap": "round" }, agentSvg);
+    AGENTS.forEach(function (a, i) {
+      var g = el("g", {}, agentSvg);
+      var ring = el("circle", { cx: AX(i), cy: AY, r: 16, fill: "none", stroke: a.color, "stroke-width": 0 }, g);
+      var dot = el("circle", { cx: AX(i), cy: AY, r: 11, fill: "var(--station)", stroke: "var(--ink)", "stroke-width": 3 }, g);
+      var chk = el("path", { d: "M " + (AX(i) - 5) + " " + AY + " l 3.5 3.5 l 6.5 -7", fill: "none", stroke: "var(--paper-raised)", "stroke-width": 2.5, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0 }, g);
+      var tx = el("text", { x: AX(i), y: AY + 40, "text-anchor": "middle", fill: "var(--ink)", style: "font-size:18px" }, g);
+      tx.textContent = a.name;
+      agentEls[a.id] = { ring: ring, dot: dot, chk: chk, i: i, color: a.color };
+    });
+    train = el("g", { class: "train", transform: "translate(" + AX(0) + "," + (AY - 30) + ")" }, agentSvg);
+    el("path", { d: "M -9 -7 H 9 L 0 5 Z", fill: "var(--orange)", stroke: "var(--ink)", "stroke-width": 2, "stroke-linejoin": "round" }, train);
+  })();
+  function setAgent(id, state) {
+    var a = agentEls[id];
+    a.ring.setAttribute("class", state === "active" ? "pulse" : "");
+    a.ring.setAttribute("stroke-width", 0);
+    a.dot.setAttribute("fill", state === "active" ? a.color : state === "done" ? "var(--ink)" : "var(--station)");
+    a.dot.setAttribute("stroke", state === "active" ? "var(--ink)" : "var(--ink)");
+    a.chk.setAttribute("opacity", state === "done" ? 1 : 0);
+    if (state === "active") {
+      a.ring.setAttribute("stroke", a.color);
+      train.setAttribute("transform", "translate(" + AX(a.i) + "," + (AY - 30) + ")");
+      train.style.transform = "translate(" + AX(a.i) + "px," + (AY - 30) + "px)";
+    }
+  }
+  function resetAgents() { AGENTS.forEach(function (a) { setAgent(a.id, "idle"); }); train.style.transform = "translate(" + AX(0) + "px," + (AY - 30) + "px)"; }
+
+  var logEl = document.getElementById("log");
+  function log(agentId, text, kind) {
+    var li = document.createElement("li");
+    li.style.setProperty("--c", agentId ? agentEls[agentId].color : "var(--ink)");
+    if (kind) li.className = kind;
+    li.textContent = text;
+    logEl.appendChild(li);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // ─── The build script: what each agent adds to the map, in order ───
+  var timers = [], running = false;
+  function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function lineGroups() {
+    // Draw prerequisite lines chain by chain, left to right.
+    computeLines();
+    var groups = {};
+    edges.forEach(function (e) {
+      var k = line[e[0]] || 0;
+      (groups[k] = groups[k] || []).push(e);
+    });
+    return Object.keys(groups).sort().map(function (k) {
+      return groups[k].sort(function (a, b) { return byId[a[0]].t - byId[b[0]].t; });
+    });
+  }
+
+  function runBuild() {
+    timers.forEach(clearTimeout); timers = [];
+    running = true;
+    var btn = document.getElementById("replay");
+    btn.disabled = true; btn.textContent = "Agents working…";
+    var rb = document.getElementById("rebuild"); rb.disabled = true;
+    document.getElementById("dirty").textContent = "";
+    resetData();
+    // The Scheduler's first draft puts the capstone in fall; the Verifier will catch it.
+    var cap = courses.filter(function (c) { return c.id === "CS4704"; })[0];
+    cap.t = 4;
+    B = { stations: {}, freshStations: {}, lines: {}, freshLines: {}, status: false, ratings: false, freshRatings: false, here: false, freshHere: false, alert: null, slideFrom: null };
+    logEl.innerHTML = ""; resetAgents(); draw();
+    document.getElementById("detail").innerHTML = "<h3>Building your plan</h3><p>Watch each agent add its piece to the map.</p>";
+
+    var tm = 300;
+    // 1. Requirements
+    at(tm, function () { setAgent("req", "active"); sound("tick"); log("req", "Reading transcript: 6 courses completed or in progress."); });
+    var past = courses.filter(function (c) { return c.t <= NOW; }).sort(function (a, b) { return a.t - b.t || a.y - b.y; });
+    var future = courses.filter(function (c) { return c.t > NOW; }).sort(function (a, b) { return a.t - b.t || a.y - b.y; });
+    past.forEach(function (c, i) { at(tm + 400 + i * 140, function () { B.stations[c.id] = 1; B.freshStations[c.id] = 1; sound("tick"); draw(); }); });
+    tm += 400 + past.length * 140 + 200;
+    at(tm, function () { log("req", "Loaded the CS checksheet (2024 catalog): 7 required courses left, plus 2 elective slots."); });
+    future.forEach(function (c, i) { at(tm + 200 + i * 140, function () { B.stations[c.id] = 1; B.freshStations[c.id] = 1; sound("tick"); draw(); }); });
+    tm += 200 + future.length * 140 + 200;
+    at(tm, function () { log("req", "Checked 8 past timetables to see when each course is usually offered."); });
+    if (P.note.trim()) {
+      tm += 900;
+      at(tm, function () {
+        var n = P.note.trim(); if (n.length > 90) n = n.slice(0, 87) + "…";
+        log("req", "Read your note: \u201c" + n + "\u201d");
+        // Stand-in for the LLM reading the note: a few recognizable intents.
+        var rules = [
+          [/machine learning|\bml\b|\bai\b|artificial/i, "Ranking AI and machine learning electives higher."],
+          [/friday/i, "Avoiding Friday classes where a section allows it."],
+          [/work|job|shift/i, "Noted your work schedule. Block those days or hours in the filters above so the Scheduler can enforce them."],
+          [/light|easier|easy|lighter/i, "Favoring sections with lower rigor ratings."],
+          [/evening|night|late/i, "Preferring later sections when they're available."],
+          [/morning|early/i, "Preferring earlier sections when they're available."]
+        ];
+        rules.forEach(function (r) { if (r[0].test(P.note)) log("req", r[1]); });
+      });
+    }
+    tm += 900;
+    at(tm, function () { setAgent("req", "done"); setAgent("prof", "active"); sound("handoff"); log("prof", "Requirements → Professors: 15 courses, 31 sections to rate.", "handoff"); });
+
+    // 2. Professors
+    tm += 900;
+    at(tm, function () { B.ratings = true; B.freshRatings = true; sound("tick"); draw(); log("prof", "Found Rate My Professors scores for 11 instructors. 2 have too few reviews, marked low confidence."); });
+    tm += 1300;
+    at(tm, function () { setAgent("prof", "done"); setAgent("sched", "active"); sound("handoff"); log("sched", "Professors → Scheduler: ratings and rigor notes for every section.", "handoff"); });
+
+    // 3. Scheduler
+    tm += 800;
+    at(tm, function () { B.status = true; draw(); log("sched", "Applying your filters: " + describeP() + "."); });
+    var groups = lineGroups();
+    tm += 500;
+    groups.forEach(function (g, gi) {
+      at(tm + gi * 650, function () {
+        g.forEach(function (e) { var k = e[0] + ">" + e[1]; B.lines[k] = 1; B.freshLines[k] = 1; });
+        sound("tick"); draw();
+      });
+    });
+    tm += groups.length * 650 + 500;
+    // Swap next-semester sections that break the filters for ones that fit.
+    courses.filter(function (c) { return c.sec && c.t === NOW + 1; }).forEach(function (c) {
+      if (fits(c.sec)) return;
+      at(tm, function () {
+        var old = c.sec, why = whyNot(old);
+        if (c.alt && fits(c.alt) && !conflictsFor(c, c.alt).length) {
+          c.sec = c.alt; c.alt = old; B.freshStations[c.id] = 1; sound("snap"); draw();
+          log("sched", code(c.id) + ": the " + fmtSec(old) + " section " + why + ", so I switched to " + fmtSec(c.sec) + ".");
+        } else {
+          sound("error"); draw();
+          log("sched", code(c.id) + ": no section fits (the " + fmtSec(old) + " section " + why + "). Widen your filters or pick a replacement.", "issue");
+        }
+      });
+      tm += 1100;
+    });
+    at(tm, function () { log("sched", "Drafted a 6-semester route aiming for " + P.credits + " credits or fewer each term."); });
+    tm += 900;
+    at(tm, function () { setAgent("sched", "done"); setAgent("ver", "active"); sound("handoff"); log("ver", "Scheduler → Verifier: draft route for checking.", "handoff"); });
+
+    // 4. Verifier catches a problem and sends it back
+    tm += 1000;
+    at(tm, function () {
+      B.alert = "CS4704"; sound("error"); draw();
+      log("ver", "Issue: CS 4704 is placed in Fall 2027, but it hasn't been offered in a fall term in 4 years.", "issue");
+      show(byId.CS4704, "Past timetables: offered Spring 2023, 2024, 2025. Never offered in fall.");
+    });
+    tm += 1800;
+    at(tm, function () { setAgent("ver", "idle"); setAgent("sched", "active"); sound("handoff"); log("sched", "Verifier → Scheduler: move CS 4704 to a spring term.", "handoff"); });
+    tm += 1000;
+    at(tm, function () {
+      var c = byId.CS4704;
+      B.alert = null; B.slideFrom = { id: "CS4704", dx: -COLW };
+      c.t = 5; sound("snap"); draw();
+      log("sched", "Moved CS 4704 to Spring 2028. Its prerequisites still come first.");
+      show(byId.CS4704);
+    });
+    tm += 1300;
+    at(tm, function () { setAgent("sched", "done"); setAgent("ver", "active"); sound("handoff"); log("ver", "Scheduler → Verifier: revised route.", "handoff"); });
+    tm += 900;
+    at(tm, function () {
+      var totals = terms.map(function (_, i) { return courses.filter(function (c) { return c.t === i; }).reduce(function (s, c) { return s + c.cr; }, 0); });
+      var overT = terms.filter(function (_, i) { return i > NOW && totals[i] > P.credits; });
+      var roomT = terms.filter(function (_, i) { return i > NOW && totals[i] < P.credits; });
+      var badSec = courses.filter(function (c) { return c.sec && c.t === NOW + 1 && !fits(c.sec); }).length;
+      var next = courses.filter(function (c) { return c.sec && c.t === NOW + 1; }), clashes = 0;
+      next.forEach(function (c, i) { next.slice(i + 1).forEach(function (o) { if (overlaps(c.sec, o.sec)) clashes++; }); });
+      log("ver", "Rechecked: " + clashes + " time conflict" + (clashes === 1 ? "" : "s") + ", all prerequisites in order." + (badSec ? " " + badSec + " section(s) still outside your filters." : " Every next-semester section fits your filters."), badSec || clashes ? "issue" : "");
+      if (overT.length) log("ver", overT.join(" and ") + (overT.length > 1 ? " are" : " is") + " over your " + P.credits + "-credit target.", "issue");
+      else if (roomT.length) log("ver", "Every term is within your " + P.credits + "-credit target. " + roomT.slice(-2).join(" and ") + " have room for more electives.");
+    });
+    tm += 1100;
+    at(tm, function () { setAgent("ver", "done"); setAgent("pres", "active"); sound("handoff"); log("pres", "Verifier → Presentation: approved route.", "handoff"); });
+
+    // 5. Presentation
+    tm += 900;
+    at(tm, function () { B.here = true; B.freshHere = true; draw(); log("pres", "Marked where you are now: Fall 2026."); });
+    tm += 1000;
+    at(tm, function () {
+      log("pres", "Flagged CS 3214 as your bottleneck: 2 later courses depend on it.");
+      show(byId.CS3214, "Bottleneck: CS 4284 and CS 4704 both depend on this course. Taking it on time keeps graduation on track.");
+      trace("CS3214");
+    });
+    tm += 1800;
+    at(tm, function () {
+      setAgent("pres", "done"); trace(null);
+      B = null; running = false; draw(); sound("done");
+      log(null, "Plan ready. Drag any open station to edit.", "done");
+      btn.disabled = false; btn.textContent = "Replay the build"; rb.disabled = false;
+    });
+  }
+  document.getElementById("replay").addEventListener("click", runBuild);
+
+  syncPrefs(false);
+  draw();
+  // Run the build once when the plan first scrolls into view.
+  if ("IntersectionObserver" in window) {
+    var seen = false;
+    new IntersectionObserver(function (entries, obs) {
+      if (entries[0].isIntersecting && !seen) { seen = true; obs.disconnect(); runBuild(); }
+    }, { threshold: 0.35 }).observe(document.querySelector(".canvas"));
+  }
+})();
+</script>
+</body>
+</html>
