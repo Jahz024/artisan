@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Calendar, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import type {
   PlanGraph,
@@ -132,7 +132,13 @@ export function WeeklyScheduleView({ planGraph, requirementsPackage }: WeeklySch
     [semNodes, requirementsPackage]
   );
 
-  const [visibleOptionals, setVisibleOptionals] = useState<Set<string>>(new Set());
+  const [visibleOptionals, setVisibleOptionals] = useState<Set<string>>(() => new Set(optionalCourseIds));
+
+  // When semester changes, show all optionals by default
+  const semTk = activeSem ? termKey(activeSem.term) : "";
+  useEffect(() => {
+    setVisibleOptionals(new Set(optionalCourseIds));
+  }, [semTk]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleOptional = useCallback((courseId: string) => {
     setVisibleOptionals((prev) => {

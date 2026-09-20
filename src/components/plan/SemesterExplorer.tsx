@@ -173,7 +173,7 @@ export function SemesterExplorer({
       const anchor = semesterNodes.find((n) => n.requirementBlockId === blockId);
       const selected = selections[`${activeTk}:${blockId}`] ?? anchor?.courseId ?? options[0]?.courseId;
       return { blockId, title: block?.name ?? blockId.replace(/-/g, " "), pick: block?.remaining ?? block?.coursesNeeded ?? 1, options, anchor, selected };
-    }).filter((g) => g.options.length > 0);
+    }).filter((g) => g.options.length > 0).slice(0, 6);
   }, [semesterNodes, requirementsPackage, selections, activeTk]);
 
   const displayNodes = useMemo(
