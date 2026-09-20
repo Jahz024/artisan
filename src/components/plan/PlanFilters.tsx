@@ -254,31 +254,23 @@ export function PlanFilters({
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-xs font-medium text-slate-400">
             Earliest start
-            <select
+            <input
+              type="text"
+              placeholder="e.g. 09:00"
               className={selectClassName()}
               value={preferences.timePreferences.noClassesBefore ?? "09:00"}
               onChange={(e) => patchTimePrefs({ noClassesBefore: e.target.value })}
-            >
-              {START_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            />
           </label>
           <label className="block text-xs font-medium text-slate-400">
             Latest end
-            <select
+            <input
+              type="text"
+              placeholder="e.g. 17:00"
               className={selectClassName()}
               value={latestEnd}
               onChange={(e) => setLatestEnd(e.target.value)}
-            >
-              {END_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            />
           </label>
         </div>
         <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5">
