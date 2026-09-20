@@ -14,6 +14,7 @@ import { cn, formatCourseCode, termKey } from "@/lib/utils";
 export interface WeeklyScheduleViewProps {
   planGraph: PlanGraph;
   requirementsPackage?: RequirementsPackage | null;
+  graphSelectedElectives?: string[];
 }
 
 const DAYS = ["M", "T", "W", "R", "F"] as const;
@@ -108,7 +109,7 @@ const COLORS_OPT = [
   { bg: "rgba(224,164,0,0.18)", border: "#c49000", text: "#8b6d00" },
 ];
 
-export function WeeklyScheduleView({ planGraph, requirementsPackage }: WeeklyScheduleViewProps) {
+export function WeeklyScheduleView({ planGraph, requirementsPackage, graphSelectedElectives }: WeeklyScheduleViewProps) {
   const semesters = planGraph.semesters;
   const [semIdx, setSemIdx] = useState(0);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
@@ -132,13 +133,18 @@ export function WeeklyScheduleView({ planGraph, requirementsPackage }: WeeklySch
     [semNodes, requirementsPackage]
   );
 
-  const [visibleOptionals, setVisibleOptionals] = useState<Set<string>>(() => new Set(optionalCourseIds));
-
-  // When semester changes, show all optionals by default
+  const graphElectiveSet = useMemo(() => new Set(graphSelectedElectives ?? []), [graphSelectedElectives]);
   const semTk = activeSem ? termKey(activeSem.term) : "";
+
+  const [visibleOptionals, setVisibleOptionals] = useState<Set<string>>(() => {
+    // Only show electives that are selected in the graph
+    return new Set(optionalCourseIds.filter((id) => graphElectiveSet.has(id)));
+  });
+
+  // Sync with graph selections — show electives picked in the explorer
   useEffect(() => {
-    setVisibleOptionals(new Set(optionalCourseIds));
-  }, [semTk]); // eslint-disable-line react-hooks/exhaustive-deps
+    setVisibleOptionals(new Set(optionalCourseIds.filter((id) => graphElectiveSet.has(id))));
+  }, [graphElectiveSet, semTk]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleOptional = useCallback((courseId: string) => {
     setVisibleOptionals((prev) => {
@@ -280,7 +286,7 @@ export function WeeklyScheduleView({ planGraph, requirementsPackage }: WeeklySch
         <div className="mb-3 rounded-lg bg-[var(--paper-sunk)] p-2.5">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ink-soft)]">
-              Show electives on schedule
+              Electives on schedule — select in graph above ↑
             </span>
             <div className="flex gap-1.5">
               <button

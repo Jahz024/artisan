@@ -95,6 +95,7 @@ export function PlanViewClient() {
   const [reqPkg, setReqPkg] = useState<RequirementsPackage | null>(null);
   const [expPkg, setExpPkg] = useState<ExperiencePackage | null>(null);
   const [draftPreferences, setDraftPreferences] = useState<UserPreferences | null>(null);
+  const [graphSelectedElectives, setGraphSelectedElectives] = useState<string[]>([]);
   const { play } = useAppSounds();
   const { muted: _muted } = useSoundSettings();
   const _reducedMotion = usePrefersReducedMotion();
@@ -298,6 +299,7 @@ export function PlanViewClient() {
             experiencePackage={expPkg}
             preferences={preferences}
             onPlanChange={(g) => void persistGraph(g)}
+            onSelectionsChange={setGraphSelectedElectives}
           />
         ) : !graph ? (
           <p className="text-center text-slate-500">No plan graph yet.</p>
@@ -319,6 +321,7 @@ export function PlanViewClient() {
           <WeeklyScheduleView
             planGraph={graph}
             requirementsPackage={reqPkg}
+            graphSelectedElectives={graphSelectedElectives}
           />
         ) : null}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, Check, Star } from "lucide-react";
 import type {
@@ -21,6 +21,7 @@ export interface SemesterExplorerProps {
   experiencePackage?: ExperiencePackage | null;
   preferences: UserPreferences;
   onPlanChange?: (graph: PlanGraph) => void;
+  onSelectionsChange?: (selectedCourseIds: string[]) => void;
 }
 
 type ElectiveOption = {
@@ -137,6 +138,7 @@ export function SemesterExplorer({
   experiencePackage,
   preferences,
   onPlanChange,
+  onSelectionsChange,
 }: SemesterExplorerProps) {
   const tabs = useMemo(() => plannableSemesters(planGraph), [planGraph]);
   const defaultTk = useMemo(() => {
@@ -200,6 +202,15 @@ export function SemesterExplorer({
     },
     [activeTk]
   );
+
+  // Notify parent of currently selected elective courses
+  useEffect(() => {
+    if (!onSelectionsChange) return;
+    const selectedIds = electiveGroups
+      .map((g) => g.selected)
+      .filter((id): id is string => Boolean(id));
+    onSelectionsChange(selectedIds);
+  }, [electiveGroups, onSelectionsChange]);
 
   // ── SVG graph layout ──────────────────────────────────────────────
   const graphLayout = useMemo(() => {
