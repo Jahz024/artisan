@@ -308,27 +308,43 @@ export function edgeWaveOffset(fromId: string, toId: string): number {
   return ((hash % 17) - 8) * 0.75;
 }
 
-/** Transit-line palette. Each prerequisite chain rides its own colored line. */
+/**
+ * Transit-line palette. Each prerequisite chain rides its own colored line.
+ * These are CSS variables so dark mode can brighten them without a re-render
+ * (see the --l0…--l5 blocks in globals.css).
+ */
 export const LINE_PALETTE = [
-  "#861F41", // maroon
-  "#E5751F", // burnt orange
-  "#2F5DA8", // blue
-  "#2E8B57", // green
-  "#127A86", // teal
-  "#C99200", // mustard
+  "var(--l0)",
+  "var(--l1)",
+  "var(--l2)",
+  "var(--l3)",
+  "var(--l4)",
+  "var(--l5)",
 ] as const;
 
+export interface LineAssignment {
+  /** Line index per course. */
+  lineOf: Map<string, number>;
+  /** Courses that started a new line despite having a placed parent. */
+  branched: Set<string>;
+  /** Resolved colour per course. */
+  colorOf: Map<string, string>;
+}
+
 /**
- * Assign every prerequisite-connected course to a "line". Roots (courses with
- * no prerequisite parents) each start a new line; a course inherits the line
- * of its first parent, so a chain like CS 1114 → 2114 → 3114 stays one color.
- * Edges are colored by the line of the course they leave from, so where two
- * lines meet the map reads like a transfer station.
+ * Assign every prerequisite-connected course to a "line".
+ *
+ * Walking courses in semester-then-row order, a course continues the colour of
+ * its vertically closest parent — but only if that parent has not already
+ * passed its colour on. A parent therefore feeds exactly one child; every
+ * other child starts a fresh line and is marked "branched". Without that rule
+ * a single root bleeds its colour across the whole map and everything reads
+ * maroon.
  */
-export function computeLineColors(
+export function computeLineAssignment(
   graph: PlanGraph,
   positions: Map<string, TreeNodePosition>
-): Map<string, string> {
+): LineAssignment {
   const parentsOf = new Map<string, string[]>();
   for (const e of graph.edges) {
     if (e.type !== "prerequisite") continue;
@@ -342,25 +358,60 @@ export function computeLineColors(
     .sort((a, b) => a.columnIndex - b.columnIndex || a.y - b.y);
 
   const lineOf = new Map<string, number>();
+  const branched = new Set<string>();
+  const continued = new Set<string>();
   let nextLine = 0;
+
   for (const pos of ordered) {
-    const parents = (parentsOf.get(pos.id) ?? []).filter((id) => lineOf.has(id));
-    if (parents.length === 0) {
+    const placed = (parentsOf.get(pos.id) ?? []).filter((id) => lineOf.has(id));
+    const available = placed.filter((id) => !continued.has(id));
+
+    if (available.length === 0) {
       lineOf.set(pos.id, nextLine++);
-    } else {
-      // Prefer the parent sitting closest vertically: the straightest track.
-      const best = parents.reduce((a, b) =>
-        Math.abs((positions.get(a)?.y ?? 0) - pos.y) <= Math.abs((positions.get(b)?.y ?? 0) - pos.y)
-          ? a
-          : b
-      );
-      lineOf.set(pos.id, lineOf.get(best)!);
+      // It has parents, but they have all already been continued: this is a
+      // branch leaving an existing line rather than a brand new root.
+      if (placed.length > 0) branched.add(pos.id);
+      continue;
     }
+
+    // Prefer the parent sitting closest vertically: the straightest track.
+    const best = available.reduce((a, b) =>
+      Math.abs((positions.get(a)?.y ?? 0) - pos.y) <=
+      Math.abs((positions.get(b)?.y ?? 0) - pos.y)
+        ? a
+        : b
+    );
+    lineOf.set(pos.id, lineOf.get(best)!);
+    continued.add(best);
   }
 
-  const colors = new Map<string, string>();
-  lineOf.forEach((line, id) => colors.set(id, LINE_PALETTE[line % LINE_PALETTE.length]));
-  return colors;
+  const colorOf = new Map<string, string>();
+  lineOf.forEach((line, id) => colorOf.set(id, LINE_PALETTE[line % LINE_PALETTE.length]));
+  return { lineOf, branched, colorOf };
+}
+
+/**
+ * Colour for one edge. A continuing track keeps its colour; a branch takes the
+ * new line's colour as it leaves; a transfer into an existing line keeps the
+ * colour it came from.
+ */
+export function edgeLineColor(
+  from: string,
+  to: string,
+  assignment: LineAssignment
+): string {
+  const a = assignment.lineOf.get(from) ?? 0;
+  const b = assignment.lineOf.get(to);
+  const line = b === undefined || a === b ? a : assignment.branched.has(to) ? b : a;
+  return LINE_PALETTE[line % LINE_PALETTE.length];
+}
+
+/** Back-compat wrapper: colour per course. */
+export function computeLineColors(
+  graph: PlanGraph,
+  positions: Map<string, TreeNodePosition>
+): Map<string, string> {
+  return computeLineAssignment(graph, positions).colorOf;
 }
 
 /**
@@ -373,6 +424,10 @@ export function transitPath(
 ): string {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
+  // Too little horizontal room to fit a run/diagonal/run: draw it straight.
+  // Without this the run below goes negative and the corner curves blow up
+  // into wide arcs across the map.
+  if (dx < 30) return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
   if (Math.abs(dy) < 1) return `M ${from.x} ${from.y} H ${to.x}`;
 
   const minRun = 18;

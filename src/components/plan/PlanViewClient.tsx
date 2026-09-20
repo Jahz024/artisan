@@ -13,6 +13,9 @@ import { AgentActivityFeed } from "@/components/agents/AgentActivityFeed";
 import { Button } from "@/components/ui/Button";
 import { DEMO_PLAN_GRAPH, DEMO_PRESENTATION } from "@/lib/demo-plan";
 import { useAppSounds } from "@/lib/useAppSounds";
+import { usePlanBuild } from "@/lib/hooks/use-plan-build";
+import { useSoundSettings } from "@/components/providers/SoundProvider";
+import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
 
 async function consumeGenerateStream(
   planId: string,
@@ -74,7 +77,11 @@ export function PlanViewClient() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creditSuggestionIds, setCreditSuggestionIds] = useState<Set<string>>(new Set());
+  /** The graph this session generated, replayed as a build before going live. */
+  const [freshGraph, setFreshGraph] = useState<PlanGraph | null>(null);
   const { play } = useAppSounds();
+  const { muted } = useSoundSettings();
+  const reducedMotion = usePrefersReducedMotion();
 
   const loadPlan = useCallback(async () => {
     setLoading(true);
@@ -113,7 +120,9 @@ export function PlanViewClient() {
               }
             : p
         );
-        play("generationComplete");
+        // Hand the finished graph to the build choreographer. It plays the
+        // completion chime itself once the map has finished drawing.
+        setFreshGraph(result.planGraph);
       }
       await loadPlan();
     } catch (e) {
@@ -133,6 +142,14 @@ export function PlanViewClient() {
   const graph = plan?.planGraph ?? (plan?.status === "draft" ? DEMO_PLAN_GRAPH : null);
   const spec = plan?.presentationSpec ?? DEMO_PRESENTATION;
   const usingDemoPreview = !plan?.planGraph && graph === DEMO_PLAN_GRAPH;
+
+  // Replay the build over the graph the agents just produced. The pipeline
+  // streams progress but not the graph, so the steps are queued and played at
+  // the reference pace once `complete` lands rather than being skipped.
+  const { build, isBuilding } = usePlanBuild(freshGraph, events, Boolean(freshGraph), {
+    muted,
+    reducedMotion,
+  });
 
   const persistGraph = async (next: PlanGraph) => {
     setPlan((p) => (p ? { ...p, planGraph: next } : p));
@@ -236,6 +253,13 @@ export function PlanViewClient() {
           {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
         </motion.section>
 
+        {/* The pipeline strip sits above the map it is drawing. */}
+        <AgentActivityFeed
+          events={events}
+          isGenerating={generating || isBuilding}
+          className="mb-8"
+        />
+
         {graph ? <GraduationProgress planGraph={graph} /> : null}
 
         {graph ? (
@@ -248,16 +272,11 @@ export function PlanViewClient() {
             onSemesterCreditTarget={(tk, target, ids) =>
               void handleSemesterCreditTarget(tk, target, ids)
             }
+            build={build}
           />
         ) : (
           <p className="text-center text-slate-500">No plan graph yet.</p>
         )}
-
-        <AgentActivityFeed
-          events={events}
-          isGenerating={generating}
-          className="mt-8"
-        />
       </main>
     </div>
   );

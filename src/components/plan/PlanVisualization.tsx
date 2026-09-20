@@ -30,8 +30,9 @@ import { Button } from "@/components/ui/Button";
 import {
   branchColorForStatus,
   compareSemesters,
-  computeLineColors,
+  computeLineAssignment,
   computeTreeLayout,
+  edgeLineColor,
   formatSemesterLabel,
   getNodePortIn,
   getNodePortOut,
@@ -44,6 +45,8 @@ import {
 } from "@/components/plan/tree-layout";
 import { cn, formatCourseCode } from "@/lib/utils";
 import { useAppSounds } from "@/lib/useAppSounds";
+import type { BuildState } from "@/lib/hooks/use-plan-build";
+import { getRMPData } from "@/data/rmp-ratings";
 import {
   computeSemesterTotalCredits,
   getCourseCredits,
@@ -61,6 +64,11 @@ interface PlanVisualizationProps {
     targetCredits: number,
     suggestionNodeIds: string[]
   ) => void;
+  /**
+   * Set while the agents are drawing the map. Anything absent from it has not
+   * been placed yet and is not rendered; null means the plan is finished.
+   */
+  build?: BuildState | null;
 }
 
 function getChainIds(nodeId: string, edges: PlanGraph["edges"]): Set<string> {
@@ -182,6 +190,7 @@ export function PlanVisualization({
   semesterCreditOverrides: _semesterCreditOverrides,
   creditSuggestionIds,
   onSemesterCreditTarget: _onSemesterCreditTarget,
+  build = null,
 }: PlanVisualizationProps) {
   const [graph, setGraph] = useState(planGraph);
   const [selectedNode, setSelectedNode] = useState<PlanNode | null>(null);
@@ -212,10 +221,21 @@ export function PlanVisualization({
   }, [planGraph]);
 
   const layout = useMemo(() => computeTreeLayout(graph), [graph]);
-  const lineColors = useMemo(
-    () => computeLineColors(graph, layout.positions),
+  const lineAssignment = useMemo(
+    () => computeLineAssignment(graph, layout.positions),
     [graph, layout.positions]
   );
+
+  /** Instructor rating per node, for the "★ x.x professor" line. */
+  const ratingByNodeId = useMemo(() => {
+    const rmp = getRMPData();
+    const m = new Map<string, number>();
+    for (const n of graph.nodes) {
+      const r = n.instructor ? rmp[n.instructor] : undefined;
+      if (r) m.set(n.id, r.overallRating);
+    }
+    return m;
+  }, [graph.nodes]);
 
   const nodeMap = useMemo(() => {
     const m = new Map<string, PlanNode>();
@@ -341,6 +361,11 @@ export function PlanVisualization({
     return graph.edges
       .filter((e) => e.type === "prerequisite")
       .map((edge) => {
+        // Mid-build, a track only exists once the Scheduler has drawn it.
+        const edgeKey = `${edge.from}>${edge.to}`;
+        if (build && !build.lines.has(edgeKey)) return null;
+        const freshLine = Boolean(build?.freshLines.has(edgeKey));
+
         const fromPos = layout.positions.get(edge.from);
         const toPos = layout.positions.get(edge.to);
         if (!fromPos || !toPos) return null;
@@ -356,9 +381,9 @@ export function PlanVisualization({
         const fromNode = nodeMap.get(edge.from);
         const toNode = nodeMap.get(edge.to);
         const traveled = fromNode?.status === "completed" && toNode?.status === "completed";
-        const stroke =
-          lineColors.get(edge.from) ??
-          branchColorForStatus(toNode?.status ?? "planned_future", inChain);
+        const stroke = lineAssignment.lineOf.has(edge.from)
+          ? edgeLineColor(edge.from, edge.to, lineAssignment)
+          : branchColorForStatus(toNode?.status ?? "planned_future", inChain);
         const opacity = highlightActive
           ? inChain
             ? 1
@@ -367,6 +392,11 @@ export function PlanVisualization({
             ? 0.4
             : 0.95;
         const strokeWidth = inChain ? 7 : 5;
+
+        // A fresh line draws itself along its own length.
+        const drawProps = freshLine
+          ? { className: "build-line-draw", pathLength: 1000 }
+          : {};
 
         return (
           <g key={`${edge.from}-${edge.to}`}>
@@ -379,6 +409,7 @@ export function PlanVisualization({
               strokeLinecap="round"
               strokeLinejoin="round"
               opacity={highlightActive && !inChain ? 0 : 1}
+              {...drawProps}
             />
             <path
               d={d}
@@ -389,11 +420,20 @@ export function PlanVisualization({
               strokeLinejoin="round"
               opacity={opacity}
               style={{ transition: "opacity 180ms ease, stroke-width 180ms ease" }}
+              {...drawProps}
             />
           </g>
         );
       });
-  }, [graph.edges, highlightActive, hoverHighlight, layout.positions, lineColors, nodeMap]);
+  }, [
+    build,
+    graph.edges,
+    highlightActive,
+    hoverHighlight,
+    layout.positions,
+    lineAssignment,
+    nodeMap,
+  ]);
 
   const electiveDecorPath = useMemo(() => {
     const electives = [...layout.positions.values()].filter((p) => p.isElective);
@@ -428,9 +468,18 @@ export function PlanVisualization({
 
   const semesterCreditsByKey = useMemo(() => {
     const m = new Map<string, number>();
+    if (build) {
+      // Mid-build the total climbs as stations land, so it always matches
+      // what is actually on the map.
+      graph.semesters.forEach((sg) => {
+        const placed = sg.nodeIds.filter((id) => build.stations.has(id));
+        m.set(termKey(sg.term), computeSemesterTotalCredits(placed, graph.nodes));
+      });
+      return m;
+    }
     graph.semesters.forEach((sg) => m.set(termKey(sg.term), sg.totalCredits));
     return m;
-  }, [graph.semesters]);
+  }, [build, graph.semesters, graph.nodes]);
 
   const tooltipPos = hoveredNode ? layout.positions.get(hoveredNode.id) : undefined;
 
@@ -544,8 +593,11 @@ export function PlanVisualization({
                       >
                         {credits} credits
                       </text>
-                      {isNow ? (
-                        <g transform={`translate(${left + 84}, ${headerY + 15})`}>
+                      {isNow && (!build || build.here) ? (
+                        <g
+                          transform={`translate(${left + 84}, ${headerY + 15})`}
+                          className={build?.freshHere ? "build-station-pop" : undefined}
+                        >
                           <circle r={7} fill="var(--orange)" stroke="var(--ink)" strokeWidth={2} />
                           <text
                             x={13}
@@ -574,6 +626,8 @@ export function PlanVisualization({
               {graph.nodes.map((node, index) => {
                 const pos = layout.positions.get(node.id);
                 if (!pos) return null;
+                // Mid-build, a station only exists once Requirements placed it.
+                if (build && !build.stations.has(node.id)) return null;
                 return (
                   <TreeNode
                     key={node.id}
@@ -589,6 +643,21 @@ export function PlanVisualization({
                     suggestionHighlight={creditSuggestionIds?.has(node.id)}
                     flashError={flashNodeId === node.id}
                     verifierWarnings={nodeVerifierWarningsById.get(node.id)}
+                    rating={ratingByNodeId.get(node.id)}
+                    buildPhase={
+                      build
+                        ? {
+                            showStatus: build.status,
+                            showRating: build.ratings,
+                            fresh: build.freshStations.has(node.id),
+                            slideDx:
+                              build.slideFrom?.id === node.id
+                                ? build.slideFrom.dx
+                                : null,
+                            alert: build.alert === node.id,
+                          }
+                        : undefined
+                    }
                   />
                 );
               })}

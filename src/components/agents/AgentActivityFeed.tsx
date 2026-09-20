@@ -15,6 +15,18 @@ import { useAppSounds } from "@/lib/useAppSounds";
 
 const AGENT_ORDER: AgentId[] = ["agent1", "agent2", "agent3", "verifier", "agent4"];
 
+/** Spacing between stations on the pipeline strip. */
+const STOP_GAP = 64;
+
+/** Each agent is a station on its own coloured line, matching the map. */
+const AGENT_LINE_COLOR: Record<AgentId, string> = {
+  agent1: "var(--l0)",
+  agent2: "var(--l2)",
+  agent3: "var(--l3)",
+  verifier: "var(--l1)",
+  agent4: "var(--l4)",
+};
+
 function TypewriterText({ text }: { text: string }) {
   const [display, setDisplay] = useState("");
 
@@ -50,7 +62,7 @@ export function AgentActivityFeed({ events, isGenerating, className }: AgentActi
   useEffect(() => {
     const handoffs = events.filter((e) => e.type === "handoff").length;
     if (handoffs > lastHandoff) {
-      play("agentHandoff");
+      play("handoff");
       setLastHandoff(handoffs);
     }
   }, [events, lastHandoff, play]);
@@ -73,6 +85,17 @@ export function AgentActivityFeed({ events, isGenerating, className }: AgentActi
     }
     return null;
   }, [events]);
+
+  // Where the marker sits. Falls back to the last finished agent so it does
+  // not snap home between a handoff and the next agent starting.
+  const markerIndex = useMemo(() => {
+    if (activeAgent) return Math.max(0, AGENT_ORDER.indexOf(activeAgent));
+    for (let i = events.length - 1; i >= 0; i--) {
+      const idx = AGENT_ORDER.indexOf(events[i].agentId);
+      if (idx >= 0) return idx;
+    }
+    return 0;
+  }, [activeAgent, events]);
 
   const completedAgents = useMemo(() => {
     const set = new Set<AgentId>();
@@ -116,28 +139,67 @@ export function AgentActivityFeed({ events, isGenerating, className }: AgentActi
             exit={{ height: 0, opacity: 0 }}
             className="border-t border-slate-700/50"
           >
-            <div className="flex gap-2 overflow-x-auto px-4 py-3">
-              {AGENT_ORDER.map((id, idx) => (
-                <div key={id} className="flex shrink-0 items-center gap-2">
-                  <AgentAvatar
-                    agentId={id}
-                    active={activeAgent === id}
-                    completed={completedAgents.has(id)}
-                    size="sm"
-                  />
-                  {idx < AGENT_ORDER.length - 1 ? (
-                    <motion.div
-                      className="h-px w-6 bg-gradient-to-r from-cyan-500/50 to-transparent"
-                      animate={
-                        completedAgents.has(id)
-                          ? { opacity: [0.4, 1, 0.4], scaleX: [0.8, 1, 0.8] }
-                          : { opacity: 0.3 }
-                      }
-                      transition={{ repeat: Infinity, duration: 1.5 }}
+            {/*
+              The pipeline as a small transit line: five stations, one per
+              agent, with an orange marker riding between them. The marker
+              animates its x-position, so when the Verifier sends work back to
+              the Scheduler it visibly travels backwards.
+            */}
+            <div className="overflow-x-auto px-4 py-3">
+              <div
+                className="relative shrink-0"
+                style={{ width: AGENT_ORDER.length * STOP_GAP, height: 54 }}
+                role="img"
+                aria-label={`Agent pipeline: ${
+                  activeAgent ? getAgentMeta(activeAgent).label + " running" : "idle"
+                }, ${completedAgents.size} of ${AGENT_ORDER.length} complete`}
+              >
+                {/* The track */}
+                <div
+                  className="absolute top-[22px] h-[3px] rounded-full bg-[var(--ink)]/15"
+                  style={{ left: 16, width: (AGENT_ORDER.length - 1) * STOP_GAP }}
+                />
+                {/* The travelled part of the track */}
+                <div
+                  className="absolute top-[22px] h-[3px] rounded-full transition-[width] duration-700 ease-out"
+                  style={{
+                    left: 16,
+                    width: Math.max(0, markerIndex * STOP_GAP),
+                    background: activeAgent
+                      ? AGENT_LINE_COLOR[activeAgent]
+                      : "var(--ink)",
+                  }}
+                />
+
+                {AGENT_ORDER.map((id, idx) => (
+                  <div
+                    key={id}
+                    className="absolute top-0 flex flex-col items-center"
+                    style={{ left: idx * STOP_GAP }}
+                  >
+                    <AgentAvatar
+                      agentId={id}
+                      active={activeAgent === id}
+                      completed={completedAgents.has(id)}
+                      size="sm"
                     />
-                  ) : null}
-                </div>
-              ))}
+                  </div>
+                ))}
+
+                {/* The marker, riding the line */}
+                {activeAgent ? (
+                  <div
+                    className="pointer-events-none absolute top-[38px] transition-transform duration-700 ease-out"
+                    style={{ transform: `translateX(${markerIndex * STOP_GAP}px)` }}
+                    aria-hidden
+                  >
+                    <span
+                      className="block h-3 w-3 rounded-full border-2 border-[var(--ink)]"
+                      style={{ background: "var(--orange)", marginLeft: 10 }}
+                    />
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <div className="grid gap-2 px-4 pb-3 sm:grid-cols-2 lg:grid-cols-5">
