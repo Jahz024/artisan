@@ -1,0 +1,192 @@
+import type { PlanGraph, PresentationSpec } from "@/types/contracts";
+
+const src = (label: string) => ({
+  type: "catalog" as const,
+  label,
+  accessedAt: new Date().toISOString(),
+});
+
+export const DEMO_PRESENTATION: PresentationSpec = {
+  suggestedArtDirection: "circuit_board",
+  artDirectionReason: "CS major — luminous traces map your prerequisite chain.",
+  heroMessage: "5 semesters to your CS degree — let's make them count.",
+  colorAccent: "#06B6D4",
+  emphasisItems: [
+    {
+      type: "heavy_semester",
+      nodeIds: ["node-cs3214"],
+      title: "Spring 2027 load",
+      description: "Systems + Algorithms stack — plan extra study blocks.",
+      priority: 1,
+    },
+  ],
+  nodeAnnotations: [
+    {
+      nodeId: "node-cs4624",
+      text: "Strong fit for your ML interest and morning schedule preference.",
+      tone: "tip",
+    },
+  ],
+  semesterAnnotations: [
+    {
+      term: { year: 2027, termType: "spring", label: "Spring 2027" },
+      text: "Critical path semester — keep prerequisites intact.",
+      tone: "warning",
+    },
+  ],
+};
+
+export const DEMO_PLAN_GRAPH: PlanGraph = {
+  id: "demo-graph",
+  studentId: "demo",
+  nodes: [
+    {
+      id: "node-cs2114",
+      courseId: "CS-2114",
+      status: "completed",
+      semester: { year: 2025, termType: "fall", label: "Fall 2025" },
+      score: 92,
+      scoreBreakdown: { rating: 9, rigorMatch: 8, timeFit: 9, graduationSpeed: 10 },
+      confidence: "high",
+      alternatives: [],
+      requirementBlockId: "cs-core",
+      warnings: [],
+      sources: [src("Catalog")],
+    },
+    {
+      id: "node-cs2505",
+      courseId: "CS-2505",
+      status: "completed",
+      semester: { year: 2026, termType: "spring", label: "Spring 2026" },
+      score: 88,
+      scoreBreakdown: { rating: 8, rigorMatch: 7, timeFit: 9, graduationSpeed: 9 },
+      confidence: "high",
+      alternatives: [],
+      requirementBlockId: "cs-core",
+      warnings: [],
+      sources: [src("Catalog")],
+    },
+    {
+      id: "node-cs3114",
+      courseId: "CS-3114",
+      status: "in_progress",
+      semester: { year: 2026, termType: "fall", label: "Fall 2026" },
+      instructor: "Dr. Chen",
+      score: 85,
+      scoreBreakdown: { rating: 8, rigorMatch: 9, timeFit: 7, graduationSpeed: 9 },
+      confidence: "medium",
+      alternatives: [
+        { courseId: "CS-3114", instructor: "Dr. Smith", score: 82, reason: "Earlier section, slightly lower RMP." },
+      ],
+      requirementBlockId: "cs-core",
+      warnings: ["Historic offering: usually Fall only"],
+      sources: [src("Timetable")],
+    },
+    {
+      id: "node-cs3214",
+      courseId: "CS-3214",
+      status: "planned_next",
+      semester: { year: 2027, termType: "spring", label: "Spring 2027" },
+      sectionCrn: "12345",
+      instructor: "Prof. Rivera",
+      score: 90,
+      scoreBreakdown: { rating: 9, rigorMatch: 8, timeFit: 8, graduationSpeed: 10 },
+      confidence: "high",
+      alternatives: [
+        { courseId: "CS-3214", instructor: "Dr. Park", score: 86, reason: "Better time fit, moderate difficulty." },
+      ],
+      requirementBlockId: "cs-core",
+      warnings: [],
+      sources: [src("RMP")],
+    },
+    {
+      id: "node-cs4624",
+      courseId: "CS-4624",
+      status: "planned_future",
+      semester: { year: 2027, termType: "fall", label: "Fall 2027" },
+      instructor: "Dr. Nguyen",
+      score: 87,
+      scoreBreakdown: { rating: 9, rigorMatch: 7, timeFit: 8, graduationSpeed: 8 },
+      confidence: "medium",
+      alternatives: [],
+      requirementBlockId: "cs-elective",
+      warnings: [],
+      sources: [src("RMP")],
+    },
+    {
+      id: "node-cs4604",
+      courseId: "CS-4604",
+      status: "planned_future",
+      semester: { year: 2028, termType: "spring", label: "Spring 2028" },
+      score: 84,
+      scoreBreakdown: { rating: 8, rigorMatch: 8, timeFit: 7, graduationSpeed: 9 },
+      confidence: "low",
+      alternatives: [
+        { courseId: "CS-4254", score: 80, reason: "Networking alternative if DB section fills." },
+      ],
+      requirementBlockId: "cs-elective",
+      warnings: ["Rare summer offering — keep in Spring"],
+      sources: [src("Historic timetable")],
+    },
+  ],
+  edges: [
+    { from: "node-cs2114", to: "node-cs2505", type: "prerequisite" },
+    { from: "node-cs2505", to: "node-cs3114", type: "prerequisite" },
+    { from: "node-cs3114", to: "node-cs3214", type: "prerequisite" },
+    { from: "node-cs3214", to: "node-cs4624", type: "prerequisite" },
+    { from: "node-cs3114", to: "node-cs4604", type: "prerequisite" },
+  ],
+  semesters: [
+    {
+      term: { year: 2025, termType: "fall", label: "Fall 2025" },
+      nodeIds: ["node-cs2114"],
+      totalCredits: 3,
+      warnings: [],
+    },
+    {
+      term: { year: 2026, termType: "spring", label: "Spring 2026" },
+      nodeIds: ["node-cs2505"],
+      totalCredits: 3,
+      warnings: [],
+    },
+    {
+      term: { year: 2026, termType: "fall", label: "Fall 2026" },
+      nodeIds: ["node-cs3114"],
+      totalCredits: 3,
+      warnings: [],
+    },
+    {
+      term: { year: 2027, termType: "spring", label: "Spring 2027" },
+      nodeIds: ["node-cs3214"],
+      totalCredits: 3,
+      warnings: ["Heavy prerequisite chain"],
+    },
+    {
+      term: { year: 2027, termType: "fall", label: "Fall 2027" },
+      nodeIds: ["node-cs4624"],
+      totalCredits: 3,
+      warnings: [],
+    },
+    {
+      term: { year: 2028, termType: "spring", label: "Spring 2028" },
+      nodeIds: ["node-cs4604"],
+      totalCredits: 3,
+      warnings: [],
+    },
+  ],
+  totalRemainingCredits: 12,
+  estimatedGraduation: { year: 2028, termType: "spring", label: "Spring 2028" },
+  generatedAt: new Date().toISOString(),
+  verifierPassed: true,
+  verifierIssues: [],
+};
+
+export const DEMO_COURSE_TITLES: Record<string, { title: string; credits: number }> = {
+  "CS-2114": { title: "Software Design and Data Structures", credits: 3 },
+  "CS-2505": { title: "Intro to Computer Organization", credits: 3 },
+  "CS-3114": { title: "Data Structures and Algorithms", credits: 3 },
+  "CS-3214": { title: "Computer Systems", credits: 3 },
+  "CS-4624": { title: "Machine Learning", credits: 3 },
+  "CS-4604": { title: "Introduction to Database Systems", credits: 3 },
+  "CS-4254": { title: "Computer Network Architecture", credits: 3 },
+};
