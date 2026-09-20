@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Plus, Volume2, VolumeX } from "lucide-react";
+import { Plus, Volume2, VolumeX, LogOut } from "lucide-react";
 import type { Session } from "next-auth";
 import type { PlanSummary } from "@/types/plan";
 import { HokieLineHero } from "@/components/home/HokieLineHero";
@@ -17,10 +18,13 @@ interface HomeDashboardProps {
 }
 
 export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
-  const { data: clientSession } = useSession();
+  const router = useRouter();
+  const { data: clientSession, update: updateSession } = useSession();
   const session = clientSession ?? initialSession;
   const [plans, setPlans] = useState<PlanSummary[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const { muted, toggleMute } = useSoundSettings();
 
   useEffect(() => {
@@ -32,6 +36,36 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
       .catch(() => setPlans([]))
       .finally(() => setLoadingPlans(false));
   }, [session?.user]);
+
+  const handleDemoSignIn = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: "demo@vt.edu",
+        password: "demo",
+      });
+      if (result?.error) {
+        setAuthError("Demo sign-in failed. Please try again.");
+        console.error("Demo sign-in error:", result.error);
+      } else if (result?.ok) {
+        await updateSession();
+        router.refresh();
+      }
+    } catch (e) {
+      setAuthError("Something went wrong. Please try again.");
+      console.error("Demo sign-in exception:", e);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    signIn("google", { callbackUrl: "/" });
+  };
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col bg-circuit-grid">
@@ -59,9 +93,20 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
             {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </Button>
           {session?.user ? (
-            <span className="hidden text-sm text-slate-400 sm:inline">
-              {session.user.name ?? session.user.email}
-            </span>
+            <>
+              <span className="hidden text-sm text-slate-400 sm:inline">
+                {session.user.name ?? session.user.email}
+              </span>
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="!px-2"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
           ) : null}
         </div>
       </header>
@@ -90,7 +135,8 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button
                 type="button"
-                onClick={() => signIn("google", { callbackUrl: "/" })}
+                onClick={handleGoogleSignIn}
+                loading={authLoading}
                 className="min-w-[220px]"
               >
                 Sign in with Google
@@ -98,19 +144,18 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
               <Button
                 variant="secondary"
                 type="button"
-                onClick={() =>
-                  signIn("credentials", {
-                    email: "demo@vt.edu",
-                    password: "demo",
-                    callbackUrl: "/",
-                  })
-                }
+                loading={authLoading}
+                onClick={handleDemoSignIn}
               >
                 Try the demo
               </Button>
-              <p className="text-sm text-[var(--ink-soft)] sm:ml-2">
-                Demo account: demo@vt.edu / demo
-              </p>
+              {authError ? (
+                <p className="text-sm text-red-500">{authError}</p>
+              ) : (
+                <p className="text-sm text-[var(--ink-soft)] sm:ml-2">
+                  Demo account: demo@vt.edu / demo
+                </p>
+              )}
             </div>
           </motion.div>
         </main>

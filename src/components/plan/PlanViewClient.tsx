@@ -268,7 +268,16 @@ export function PlanViewClient() {
         {/* 1. Graduation progress — always at the very top */}
         {graph ? <GraduationProgress planGraph={graph} /> : null}
 
-        {/* 2. Filters — right below grad progress */}
+        {/* 2. Agent pipeline — above chart while generating, moves to bottom when done */}
+        {generating ? (
+          <AgentActivityFeed
+            events={events}
+            isGenerating={generating}
+            className="mt-8"
+          />
+        ) : null}
+
+        {/* 3. Filters — right below grad progress */}
         {preferences && graph ? (
           <div className="mt-4">
             <PlanFilters
@@ -281,7 +290,7 @@ export function PlanViewClient() {
           </div>
         ) : null}
 
-        {/* 3. Semester explorer graph */}
+        {/* 4. Semester explorer graph */}
         {graph && preferences ? (
           <SemesterExplorer
             planGraph={graph}
@@ -296,7 +305,7 @@ export function PlanViewClient() {
 
         {graph ? <PrereqChainView planGraph={graph} className="mt-8 hidden" /> : null}
 
-        {/* 4. Course lists */}
+        {/* 5. Course lists */}
         {graph ? (
           <SemesterCourseList planGraph={graph} requiredOnly />
         ) : null}
@@ -305,7 +314,7 @@ export function PlanViewClient() {
           <SemesterCourseList planGraph={graph} optionalOnly />
         ) : null}
 
-        {/* 5. Weekly schedule */}
+        {/* 6. Weekly schedule */}
         {graph ? (
           <WeeklyScheduleView
             planGraph={graph}
@@ -313,12 +322,14 @@ export function PlanViewClient() {
           />
         ) : null}
 
-        {/* 6. Agent pipeline — at the very bottom */}
-        <AgentActivityFeed
-          events={events}
-          isGenerating={generating}
-          className="mt-8"
-        />
+        {/* 7. Agent pipeline — at the bottom once generation is done */}
+        {!generating && events.length > 0 ? (
+          <AgentActivityFeed
+            events={events}
+            isGenerating={false}
+            className="mt-8"
+          />
+        ) : null}
       </main>
     </div>
   );

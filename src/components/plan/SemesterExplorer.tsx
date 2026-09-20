@@ -227,7 +227,7 @@ export function SemesterExplorer({
     let maxWidth = reqWidth + padX * 2;
 
     electiveGroups.forEach((group, gi) => {
-      const count = Math.min(group.options.length, 12);
+      const count = Math.min(group.options.length, 5);
       const cols = Math.min(count, COLS_PER_ROW);
       const rows = Math.ceil(count / COLS_PER_ROW);
       const totalWidth = (cols - 1) * COL_WIDTH;
@@ -235,7 +235,7 @@ export function SemesterExplorer({
       const junctionY = groupStartY;
       const lineColor = LINE_COLORS[gi % LINE_COLORS.length]!;
 
-      const optPositions = group.options.slice(0, 12).map((opt, oi) => {
+      const optPositions = group.options.slice(0, 5).map((opt, oi) => {
         const col = oi % COLS_PER_ROW;
         const row = Math.floor(oi / COLS_PER_ROW);
         return {
