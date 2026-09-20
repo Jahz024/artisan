@@ -88,9 +88,9 @@ export function CourseNode({
       }}
       transition={{ delay: index * 0.04, type: "spring", stiffness: 280, damping: 24 }}
       className={cn(
-        "group relative w-full cursor-grab rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm active:cursor-grabbing",
-        unconnected && "border-dashed border-slate-300",
-        !unconnected && node.status === "completed" && "cursor-default border-slate-300",
+        "group relative w-full cursor-grab rounded-xl border border-slate-800 bg-white p-2.5 shadow-sm active:cursor-grabbing",
+        unconnected && "border-dashed border-slate-700",
+        !unconnected && node.status === "completed" && "cursor-default border-slate-700",
         !unconnected && node.status === "in_progress" && "border-emerald-300",
         !unconnected && node.status === "planned_next" && "border-orange-300",
         !unconnected && node.status === "planned_future" && "border-amber-200",
@@ -120,7 +120,7 @@ export function CourseNode({
       {showInPort ? (
         <span
           className={cn(
-            "pointer-events-none absolute left-0 top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-300 bg-emerald-500",
+            "pointer-events-none absolute left-0 top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-700 bg-emerald-500",
             highlighted && "scale-125 bg-emerald-400"
           )}
           aria-hidden
@@ -129,7 +129,7 @@ export function CourseNode({
       {showOutPort ? (
         <span
           className={cn(
-            "pointer-events-none absolute right-0 top-1/2 z-10 h-2 w-2 translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-300 bg-emerald-500",
+            "pointer-events-none absolute right-0 top-1/2 z-10 h-2 w-2 translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-700 bg-emerald-500",
             highlighted && "scale-125 bg-emerald-400"
           )}
           aria-hidden
@@ -137,7 +137,7 @@ export function CourseNode({
       ) : null}
 
       <div className="flex items-start justify-between gap-1 pl-1 pr-1">
-        <span className="font-mono-accent text-xs font-semibold text-slate-900">
+        <span className="font-mono-accent text-xs font-semibold text-slate-100">
           {formatCourseCode(node.courseId)}
         </span>
         <Icon
@@ -150,10 +150,10 @@ export function CourseNode({
           )}
         />
       </div>
-      <p className="mt-1 line-clamp-2 pl-1 pr-1 text-[11px] leading-snug text-slate-600">{title}</p>
+      <p className="mt-1 line-clamp-2 pl-1 pr-1 text-[11px] leading-snug text-slate-400">{title}</p>
       <div className="mt-2 flex items-center justify-between gap-1 pl-1 pr-1">
         <Badge variant={node.status} className="!text-[9px]" />
-        <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono-accent text-[10px] text-slate-700">
+        <span className="rounded bg-slate-900 px-1.5 py-0.5 font-mono-accent text-[10px] text-slate-300">
           {node.score}
         </span>
       </div>
@@ -166,8 +166,8 @@ export function CourseNode({
         </span>
       ) : null}
 
-      <div className="pointer-events-none absolute -bottom-10 left-1/2 z-20 hidden w-44 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-2 text-[10px] text-slate-600 shadow-lg group-hover:block group-focus-within:block">
-        <p className="font-medium text-slate-900">{title}</p>
+      <div className="pointer-events-none absolute -bottom-10 left-1/2 z-20 hidden w-44 -translate-x-1/2 rounded-lg border border-slate-800 bg-white p-2 text-[10px] text-slate-400 shadow-lg group-hover:block group-focus-within:block">
+        <p className="font-medium text-slate-100">{title}</p>
         <p className="mt-1 text-slate-500">
           {node.instructor ? `Prof. ${node.instructor}` : "Instructor TBD"}
         </p>

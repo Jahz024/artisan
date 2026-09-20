@@ -60,7 +60,7 @@ export function ReplacementModal({
                           </span>
                           <span className="text-xs text-slate-400">Score {opt.score}</span>
                         </div>
-                        <p className="mt-1 text-sm text-slate-200">
+                        <p className="mt-1 text-sm text-slate-100">
                           {meta?.title ?? "Course alternative"}
                         </p>
                         {opt.instructor ? (

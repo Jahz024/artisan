@@ -61,22 +61,22 @@ export function SemesterColumn({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: columnIndex * 0.06 }}
       className={cn(
-        "relative flex w-[220px] shrink-0 flex-col rounded-xl border border-slate-200 bg-white shadow-sm",
+        "relative flex w-[220px] shrink-0 flex-col rounded-xl border border-slate-800 bg-white shadow-sm",
         isOver && "border-[var(--vt-orange)]/50 bg-orange-50/50 shadow-md"
       )}
     >
-      <header className="relative border-b border-slate-200 px-3 pb-3 pt-3">
+      <header className="relative border-b border-slate-800 px-3 pb-3 pt-3">
         <div className="flex flex-col gap-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--vt-maroon)]" />
-                <h3 className="text-sm font-semibold leading-tight text-slate-900">
+                <h3 className="text-sm font-semibold leading-tight text-slate-100">
                   {semester.term.label}
                 </h3>
               </div>
             </div>
-            <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono-accent text-[10px] text-slate-700">
+            <span className="shrink-0 rounded-full border border-slate-800 bg-slate-950 px-2 py-0.5 font-mono-accent text-[10px] text-slate-300">
               {semester.totalCredits} cr
             </span>
             {onSemesterCreditTarget ? (

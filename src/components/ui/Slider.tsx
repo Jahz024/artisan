@@ -28,10 +28,10 @@ export function Slider({
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between gap-2 text-sm">
-        <span className="text-slate-700">{label}</span>
+        <span className="text-slate-300">{label}</span>
         <span className="font-mono-accent tabular-nums text-[var(--vt-maroon)]">{value}</span>
       </div>
-      <div className="relative h-2 rounded-full bg-slate-200">
+      <div className="relative h-2 rounded-full bg-slate-800">
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[var(--vt-maroon)] to-[var(--vt-orange)]"
           style={{ width: `${pct}%` }}
@@ -65,15 +65,15 @@ interface ToggleProps {
 
 export function Toggle({ label, checked, onChange, description }: ToggleProps) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 hover:border-slate-300 hover:bg-white">
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/80 p-3 hover:border-slate-700 hover:bg-white">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 h-4 w-4 rounded border-slate-300 text-[var(--vt-maroon)] focus:ring-[var(--vt-maroon)]/30"
+        className="mt-1 h-4 w-4 rounded border-slate-700 accent-[var(--vt-maroon)] focus:ring-[var(--vt-maroon)]/30"
       />
       <span>
-        <span className="block text-sm font-medium text-slate-800">{label}</span>
+        <span className="block text-sm font-medium text-slate-100">{label}</span>
         {description ? (
           <span className="mt-0.5 block text-xs text-slate-500">{description}</span>
         ) : null}

@@ -56,7 +56,7 @@ function requirementMeta(blockId: string): { label: string; accent: string } {
     return { label: "Gen Ed", accent: "bg-sky-500" };
   }
   if (id.includes("free")) {
-    return { label: "Free Elective", accent: "bg-slate-400" };
+    return { label: "Free Elective", accent: "bg-slate-600" };
   }
   if (id.includes("minor")) {
     return { label: "Minor Req", accent: "bg-violet-500" };
@@ -67,7 +67,7 @@ function requirementMeta(blockId: string): { label: string; accent: string } {
   if (id.includes("core") || id.includes("major") || id.includes("cs-")) {
     return { label: "Major Req", accent: "bg-[#861F41]" };
   }
-  return { label: "Requirement", accent: "bg-slate-400" };
+  return { label: "Requirement", accent: "bg-slate-600" };
 }
 
 function FilterSection({
@@ -80,8 +80,8 @@ function FilterSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+    <section className="rounded-2xl border border-slate-800/80 bg-white p-4 shadow-sm">
+      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-100">
         <Icon className="h-4 w-4 text-[#861F41]" aria-hidden />
         {title}
       </h3>
@@ -109,10 +109,10 @@ function LightSlider({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2 text-sm">
-        <span className="text-slate-600">{label}</span>
+        <span className="text-slate-400">{label}</span>
         <span className="font-semibold tabular-nums text-[#861F41]">{value}</span>
       </div>
-      <div className="relative h-2 rounded-full bg-slate-100">
+      <div className="relative h-2 rounded-full bg-slate-900">
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#861F41] to-[#E87722]"
           style={{ width: `${pct}%` }}
@@ -138,7 +138,7 @@ function LightSlider({
 }
 
 function selectClassName() {
-  return "mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:border-[#861F41]/40 focus:outline-none focus:ring-2 focus:ring-[#861F41]/15";
+  return "mt-1 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-[#861F41]/40 focus:outline-none focus:ring-2 focus:ring-[#861F41]/15";
 }
 
 export interface PlanFiltersProps {
@@ -229,7 +229,7 @@ export function PlanFilters({
     <div className="space-y-4">
       <FilterSection icon={Clock} title="Time preferences">
         <div>
-          <p className="text-xs font-medium text-slate-600">Preferred days</p>
+          <p className="text-xs font-medium text-slate-400">Preferred days</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {DAY_PILLS.map((d) => {
               const active = preferredDays.includes(d.value);
@@ -242,7 +242,7 @@ export function PlanFilters({
                     "min-w-[2.25rem] rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
                     active
                       ? "border-[#861F41] bg-[#861F41] text-white shadow-sm"
-                      : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-orange-50 hover:border-slate-300"
+                      : "border-slate-800 bg-slate-950 text-slate-400 hover:bg-orange-50 hover:border-slate-700"
                   )}
                 >
                   {d.label}
@@ -252,7 +252,7 @@ export function PlanFilters({
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <label className="block text-xs font-medium text-slate-600">
+          <label className="block text-xs font-medium text-slate-400">
             Earliest start
             <select
               className={selectClassName()}
@@ -266,7 +266,7 @@ export function PlanFilters({
               ))}
             </select>
           </label>
-          <label className="block text-xs font-medium text-slate-600">
+          <label className="block text-xs font-medium text-slate-400">
             Latest end
             <select
               className={selectClassName()}
@@ -281,13 +281,13 @@ export function PlanFilters({
             </select>
           </label>
         </div>
-        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-          <span className="text-sm font-medium text-slate-700">No Friday classes</span>
+        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5">
+          <span className="text-sm font-medium text-slate-300">No Friday classes</span>
           <input
             type="checkbox"
             checked={preferences.timePreferences.noFridayClasses}
             onChange={(e) => patchTimePrefs({ noFridayClasses: e.target.checked })}
-            className="h-4 w-4 rounded border-slate-300 text-[#861F41] focus:ring-[#861F41]/30"
+            className="h-4 w-4 rounded border-slate-700 text-[#861F41] focus:ring-[#861F41]/30"
           />
         </label>
       </FilterSection>
@@ -296,7 +296,7 @@ export function PlanFilters({
         <p className="text-xs text-slate-500">
           Current load by semester — adjust your max credits per term.
         </p>
-        <ul className="space-y-1.5 rounded-xl border border-slate-100 bg-slate-50/80 p-2">
+        <ul className="space-y-1.5 rounded-xl border border-slate-900 bg-slate-950/80 p-2">
           {semesterRows.length === 0 ? (
             <li className="px-2 py-1 text-xs text-slate-500">No semesters in plan yet.</li>
           ) : (
@@ -305,8 +305,8 @@ export function PlanFilters({
                 key={tk}
                 className="flex items-center justify-between rounded-lg bg-white px-2.5 py-1.5 text-xs shadow-sm"
               >
-                <span className="font-medium text-slate-700">{sem.term.label}</span>
-                <span className="tabular-nums text-slate-600">
+                <span className="font-medium text-slate-300">{sem.term.label}</span>
+                <span className="tabular-nums text-slate-400">
                   {credits} cr
                   {preferences.semesterCreditOverrides?.[tk] !== undefined ? (
                     <span className="ml-1 text-[#861F41]">
@@ -325,8 +325,8 @@ export function PlanFilters({
           max={19}
           onChange={(v) => patchPrefs({ creditLoadMax: v, creditLoadMin: Math.min(preferences.creditLoadMin, v) })}
         />
-        <p className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
-          <span className="font-semibold tabular-nums text-slate-900">{maxCredits} credits</span>
+        <p className="flex flex-wrap items-center gap-2 text-sm text-slate-300">
+          <span className="font-semibold tabular-nums text-slate-100">{maxCredits} credits</span>
           {inSweetSpot ? (
             <span className="inline-flex items-center rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-[#E87722] ring-1 ring-[#E87722]/25">
               Sweet spot
@@ -370,14 +370,14 @@ export function PlanFilters({
       </FilterSection>
 
       <FilterSection icon={Wand2} title="Quick actions">
-        <label className="block text-xs font-medium text-slate-600">
+        <label className="block text-xs font-medium text-slate-400">
           Describe what you&apos;d like to change…
           <textarea
             value={tweakText}
             onChange={(e) => setTweakText(e.target.value)}
             rows={3}
             placeholder="e.g. Swap CS 3214 for an easier algorithms elective…"
-            className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#861F41]/40 focus:outline-none focus:ring-2 focus:ring-[#861F41]/15"
+            className="mt-1 w-full resize-none rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-[#861F41]/40 focus:outline-none focus:ring-2 focus:ring-[#861F41]/15"
           />
         </label>
         <div className="flex flex-wrap gap-2">
@@ -386,7 +386,7 @@ export function PlanFilters({
               key={chip}
               type="button"
               onClick={() => setTweakText(chip)}
-              className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition-colors hover:border-[#E87722]/40 hover:bg-orange-50"
+              className="rounded-full border border-slate-800 bg-slate-950 px-3 py-1 text-xs font-medium text-slate-300 transition-colors hover:border-[#E87722]/40 hover:bg-orange-50"
             >
               {chip}
             </button>
@@ -454,8 +454,8 @@ export function SemesterCourseList({ planGraph }: SemesterCourseListProps) {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+    <section className="mt-6 rounded-2xl border border-slate-800/80 bg-white p-4 shadow-sm">
+      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-100">
         <ListTree className="h-4 w-4 text-[#861F41]" aria-hidden />
         Semester course list
       </h3>
@@ -463,13 +463,13 @@ export function SemesterCourseList({ planGraph }: SemesterCourseListProps) {
         {semesterRows.map(({ sem, nodes, credits, tk }) => {
           const open = expandedTerms.has(tk);
           return (
-            <li key={tk} className="overflow-hidden rounded-xl border border-slate-100 bg-slate-50/50">
+            <li key={tk} className="overflow-hidden rounded-xl border border-slate-900 bg-slate-950/50">
               <button
                 type="button"
                 onClick={() => toggleTermExpanded(tk)}
-                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-slate-950"
               >
-                <span className="flex items-center gap-1.5 font-medium text-slate-800">
+                <span className="flex items-center gap-1.5 font-medium text-slate-100">
                   {open ? (
                     <ChevronDown className="h-4 w-4 text-slate-400" />
                   ) : (
@@ -480,7 +480,7 @@ export function SemesterCourseList({ planGraph }: SemesterCourseListProps) {
                 <span className="text-xs tabular-nums text-slate-500">{credits} cr</span>
               </button>
               {open ? (
-                <ul className="space-y-1 border-t border-slate-100 px-2 pb-2 pt-1">
+                <ul className="space-y-1 border-t border-slate-900 px-2 pb-2 pt-1">
                   {nodes.map((node) => {
                     const meta = requirementMeta(node.requirementBlockId);
                     const title =
@@ -489,20 +489,20 @@ export function SemesterCourseList({ planGraph }: SemesterCourseListProps) {
                     return (
                       <li
                         key={node.id}
-                        className="flex gap-2 rounded-lg border border-slate-100 bg-white py-2 pl-0 pr-2 shadow-sm"
+                        className="flex gap-2 rounded-lg border border-slate-900 bg-white py-2 pl-0 pr-2 shadow-sm"
                       >
                         <div className={cn("w-1 shrink-0 rounded-l-lg", meta.accent)} aria-hidden />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                            <span className="text-xs font-bold text-slate-900">
+                            <span className="text-xs font-bold text-slate-100">
                               {formatCourseCode(node.courseId)}
                             </span>
                             <span className="text-xs text-slate-500 tabular-nums">
                               {creditsForNode(node)} cr
                             </span>
                           </div>
-                          <p className="truncate text-xs text-slate-600">{title}</p>
-                          <span className="mt-0.5 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
+                          <p className="truncate text-xs text-slate-400">{title}</p>
+                          <span className="mt-0.5 inline-block rounded-md bg-slate-900 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
                             {meta.label}
                           </span>
                         </div>

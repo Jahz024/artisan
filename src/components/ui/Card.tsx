@@ -9,7 +9,7 @@ interface CardProps extends HTMLMotionProps<"div"> {
 }
 
 const glowMap = {
-  cyan: "hover:border-slate-300 hover:shadow-md",
+  cyan: "hover:border-slate-700 hover:shadow-md",
   maroon: "hover:border-[var(--vt-maroon)]/30 hover:shadow-md",
   none: "hover:shadow-md",
 };
@@ -32,7 +32,7 @@ export function Card({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow duration-300",
+        "rounded-2xl border border-slate-800 bg-white shadow-sm transition-shadow duration-300",
         glowMap[glow],
         padMap[padding],
         className

@@ -81,7 +81,7 @@ export function SemesterCreditControl({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-[var(--vt-maroon)]",
+          "rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-900 hover:text-[var(--vt-maroon)]",
           open && "bg-orange-50 text-[var(--vt-orange)]"
         )}
       >
@@ -89,8 +89,8 @@ export function SemesterCreditControl({
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-full z-30 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
-          <p className="text-xs font-medium text-slate-800">
+        <div className="absolute left-0 top-full z-30 mt-2 w-72 rounded-xl border border-slate-800 bg-white p-4 shadow-lg">
+          <p className="text-xs font-medium text-slate-100">
             Credits for {semester.term.label}
           </p>
           <p className="mt-1 text-xs text-slate-500 tabular-nums">
@@ -113,11 +113,11 @@ export function SemesterCreditControl({
           </Button>
 
           {lastSummary ? (
-            <p className="mt-3 text-xs leading-relaxed text-slate-700">{lastSummary}</p>
+            <p className="mt-3 text-xs leading-relaxed text-slate-300">{lastSummary}</p>
           ) : null}
 
           {lastSuggestionIds.length > 0 ? (
-            <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs text-slate-700">
+            <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs text-slate-300">
               {lastSuggestionIds.map((id) => {
                 const node = planGraph.nodes.find((n) => n.id === id);
                 if (!node) return null;
@@ -131,7 +131,7 @@ export function SemesterCreditControl({
                       "rounded border px-2 py-1",
                       active
                         ? "border-violet-300 bg-violet-50 text-violet-900"
-                        : "border-slate-200 bg-slate-50"
+                        : "border-slate-800 bg-slate-950"
                     )}
                   >
                     {formatCourseCode(node.courseId)} · {creditsForNode(node)} cr — {title}

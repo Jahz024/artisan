@@ -139,13 +139,13 @@ export function CreatePlanWizard() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
-      <Link href="/" className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-[var(--vt-maroon)]">
+      <Link href="/" className="inline-flex items-center gap-1 text-sm text-slate-400 hover:text-[var(--vt-maroon)]">
         <ArrowLeft className="h-4 w-4" />
         Dashboard
       </Link>
 
-      <h1 className="mt-6 text-3xl font-bold text-slate-900">Create your plan</h1>
-      <p className="mt-2 text-slate-600">Four steps to your personalized graduation map.</p>
+      <h1 className="mt-6 text-3xl font-bold text-slate-100">Create your plan</h1>
+      <p className="mt-2 text-slate-400">Four steps to your personalized graduation map.</p>
 
       <div className="mt-8">
         <div className="mb-2 flex justify-between text-xs text-slate-500">
@@ -183,11 +183,11 @@ export function CreatePlanWizard() {
                 onDrop={onDrop}
                 className={cn(
                   "flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-14 transition-shadow",
-                  dragOver ? "border-[var(--vt-orange)] bg-orange-50/50" : "border-slate-300 bg-white"
+                  dragOver ? "border-[var(--vt-orange)] bg-orange-50/50" : "border-slate-700 bg-white"
                 )}
               >
                 <FileUp className="h-10 w-10 text-[var(--vt-maroon)]" />
-                <p className="mt-4 text-center text-slate-800">Drop your VT transcript PDF here</p>
+                <p className="mt-4 text-center text-slate-100">Drop your VT transcript PDF here</p>
                 <p className="mt-1 text-sm text-slate-500">or choose a file</p>
                 <label className="mt-6 cursor-pointer">
                   <input
@@ -215,10 +215,10 @@ export function CreatePlanWizard() {
                       key={preset.id}
                       type="button"
                       onClick={() => useDemo(preset)}
-                      className="flex flex-col items-start gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition-all hover:border-[var(--vt-orange)]/50 hover:bg-orange-50/50 hover:shadow-sm"
+                      className="flex flex-col items-start gap-1 rounded-xl border border-slate-800 bg-white px-3 py-2.5 text-left transition-all hover:border-[var(--vt-orange)]/50 hover:bg-orange-50/50 hover:shadow-sm"
                     >
                       <span className="text-lg leading-none">{preset.emoji}</span>
-                      <span className="text-sm font-semibold text-slate-900">{preset.label}</span>
+                      <span className="text-sm font-semibold text-slate-100">{preset.label}</span>
                       <span className="text-[11px] text-slate-500">{preset.description}</span>
                     </button>
                   ))}
@@ -245,7 +245,7 @@ export function CreatePlanWizard() {
                 <input
                   value={major}
                   onChange={(e) => setMajor(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-[var(--vt-maroon)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--vt-maroon)]/20"
+                  className="mt-1 w-full rounded-lg border border-slate-800 bg-white px-3 py-2 text-slate-100 focus:border-[var(--vt-maroon)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--vt-maroon)]/20"
                 />
               </label>
               <label className="block text-sm">
@@ -253,7 +253,7 @@ export function CreatePlanWizard() {
                 <input
                   value={minors}
                   onChange={(e) => setMinors(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-[var(--vt-maroon)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--vt-maroon)]/20"
+                  className="mt-1 w-full rounded-lg border border-slate-800 bg-white px-3 py-2 text-slate-100 focus:border-[var(--vt-maroon)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--vt-maroon)]/20"
                 />
               </label>
               <label className="block text-sm">
@@ -261,7 +261,7 @@ export function CreatePlanWizard() {
                 <input
                   value={catalogYear}
                   onChange={(e) => setCatalogYear(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 focus:border-[var(--vt-maroon)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--vt-maroon)]/20"
+                  className="mt-1 w-full rounded-lg border border-slate-800 bg-white px-3 py-2 text-slate-100 focus:border-[var(--vt-maroon)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--vt-maroon)]/20"
                 />
               </label>
             </motion.div>
@@ -275,7 +275,7 @@ export function CreatePlanWizard() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-5"
             >
-              <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              <p className="rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-300">
                 How many credits do you want per semester? Most students take 15-16. The maximum
                 allowed is 19 (overloads require approval).
               </p>
@@ -329,7 +329,7 @@ export function CreatePlanWizard() {
                       timePreferences: { ...p.timePreferences, noClassesBefore: e.target.value },
                     }))
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900"
+                  className="mt-1 w-full rounded-lg border border-slate-800 bg-white px-3 py-2 text-slate-100"
                 />
               </label>
               <label className="block text-sm">
@@ -337,7 +337,7 @@ export function CreatePlanWizard() {
                 <input
                   value={interestsText}
                   onChange={(e) => setInterestsText(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900"
+                  className="mt-1 w-full rounded-lg border border-slate-800 bg-white px-3 py-2 text-slate-100"
                 />
               </label>
               <Slider
@@ -397,7 +397,7 @@ export function CreatePlanWizard() {
                 <input
                   value={planName}
                   onChange={(e) => setPlanName(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-lg text-slate-900 focus:border-[var(--vt-maroon)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--vt-maroon)]/20"
+                  className="mt-1 w-full rounded-lg border border-slate-800 bg-white px-3 py-2 text-lg text-slate-100 focus:border-[var(--vt-maroon)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--vt-maroon)]/20"
                 />
               </label>
               <p className="text-sm text-slate-500">
@@ -407,7 +407,7 @@ export function CreatePlanWizard() {
           ) : null}
         </AnimatePresence>
 
-        <div className="mt-8 flex justify-between border-t border-slate-200 pt-6">
+        <div className="mt-8 flex justify-between border-t border-slate-800 pt-6">
           <Button variant="ghost" type="button" onClick={back} disabled={step === 0}>
             Back
           </Button>
