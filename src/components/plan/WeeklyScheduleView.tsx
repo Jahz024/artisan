@@ -136,15 +136,12 @@ export function WeeklyScheduleView({ planGraph, requirementsPackage, graphSelect
   const graphElectiveSet = useMemo(() => new Set(graphSelectedElectives ?? []), [graphSelectedElectives]);
   const semTk = activeSem ? termKey(activeSem.term) : "";
 
-  const [visibleOptionals, setVisibleOptionals] = useState<Set<string>>(() => {
-    // Only show electives that are selected in the graph
-    return new Set(optionalCourseIds.filter((id) => graphElectiveSet.has(id)));
-  });
+  // Merge graph-selected electives into the visible set
+  const [visibleOptionals, setVisibleOptionals] = useState<Set<string>>(new Set());
 
-  // Sync with graph selections — show electives picked in the explorer
   useEffect(() => {
-    setVisibleOptionals(new Set(optionalCourseIds.filter((id) => graphElectiveSet.has(id))));
-  }, [graphElectiveSet, semTk]); // eslint-disable-line react-hooks/exhaustive-deps
+    setVisibleOptionals(new Set(graphSelectedElectives ?? []));
+  }, [graphSelectedElectives, semTk]);
 
   const toggleOptional = useCallback((courseId: string) => {
     setVisibleOptionals((prev) => {
@@ -174,11 +171,11 @@ export function WeeklyScheduleView({ planGraph, requirementsPackage, graphSelect
     const sections = requirementsPackage?.currentTermSections ?? [];
     const blocks: ScheduleBlock[] = [];
 
-    const visibleNodes = semNodes.filter((n) => visibleCourseIds.has(n.courseId));
+    // Required courses from plan nodes
+    const visibleNodes = semNodes.filter((n) => requiredCourseIds.has(n.courseId));
 
     visibleNodes.forEach((node, i) => {
       const section = lookupSection(node, sections);
-      const required = requiredCourseIds.has(node.courseId);
       let days: string;
       let startTime: string;
       let endTime: string;
@@ -205,14 +202,41 @@ export function WeeklyScheduleView({ planGraph, requirementsPackage, graphSelect
             day: ch,
             startHour,
             endHour,
-            isRequired: required,
+            isRequired: true,
+          });
+        }
+      }
+    });
+
+    // Graph-selected electives (may not be in plan nodes)
+    const electives = [...visibleOptionals];
+    electives.forEach((courseId, i) => {
+      if (requiredCourseIds.has(courseId)) return;
+      const section = sections.find((s) => s.courseId === courseId);
+      const demo = generateDemoTimes(courseId, i + semNodes.length);
+      const days = section?.days ?? demo.days;
+      const startTime = section?.startTime ?? demo.startTime;
+      const endTime = section?.endTime ?? demo.endTime;
+
+      const startHour = parseTime(startTime);
+      const endHour = parseTime(endTime);
+
+      for (const ch of days) {
+        if (DAYS.includes(ch as typeof DAYS[number])) {
+          blocks.push({
+            courseId,
+            instructor: section?.instructor,
+            day: ch,
+            startHour,
+            endHour,
+            isRequired: false,
           });
         }
       }
     });
 
     return blocks;
-  }, [activeSem, semNodes, requirementsPackage, visibleCourseIds, requiredCourseIds]);
+  }, [activeSem, semNodes, requirementsPackage, visibleOptionals, requiredCourseIds]);
 
   const totalHours = HOUR_END - HOUR_START;
   const gridHeight = totalHours * ROW_HEIGHT;
@@ -226,13 +250,15 @@ export function WeeklyScheduleView({ planGraph, requirementsPackage, graphSelect
       if (requiredCourseIds.has(n.courseId)) {
         map.set(n.courseId, COLORS_REQ[reqIdx % COLORS_REQ.length]!);
         reqIdx++;
-      } else {
-        map.set(n.courseId, COLORS_OPT[optIdx % COLORS_OPT.length]!);
-        optIdx++;
       }
     }
+    for (const cid of visibleOptionals) {
+      if (map.has(cid)) continue;
+      map.set(cid, COLORS_OPT[optIdx % COLORS_OPT.length]!);
+      optIdx++;
+    }
     return map;
-  }, [semNodes, requiredCourseIds]);
+  }, [semNodes, requiredCourseIds, visibleOptionals]);
 
   if (!activeSem) return null;
 
@@ -282,48 +308,30 @@ export function WeeklyScheduleView({ planGraph, requirementsPackage, graphSelect
       </div>
 
       {/* Course toggles for optional classes */}
-      {optionalCourseIds.length > 0 && (
+      {visibleOptionals.size > 0 && (
         <div className="mb-3 rounded-lg bg-[var(--paper-sunk)] p-2.5">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--ink-soft)]">
               Electives on schedule — select in graph above ↑
             </span>
             <div className="flex gap-1.5">
-              <button
-                onClick={showAllOptionals}
-                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]"
-              >
-                <Eye className="h-3 w-3" /> All
-              </button>
-              <button
-                onClick={hideAllOptionals}
-                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-[var(--ink-soft)] hover:bg-[var(--paper-raised)]"
-              >
-                <EyeOff className="h-3 w-3" /> None
-              </button>
             </div>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {optionalCourseIds.map((cid) => {
-              const active = visibleOptionals.has(cid);
+            {[...visibleOptionals].map((cid) => {
               const colors = colorMap.get(cid) ?? COLORS_OPT[0]!;
               return (
-                <button
+                <span
                   key={cid}
-                  onClick={() => toggleOptional(cid)}
-                  className={cn(
-                    "rounded-md px-2 py-1 text-[11px] font-semibold transition",
-                    active ? "ring-1 ring-offset-1" : "opacity-50"
-                  )}
+                  className="rounded-md px-2 py-1 text-[11px] font-semibold ring-1 ring-offset-1"
                   style={{
-                    backgroundColor: active ? colors.bg : "transparent",
+                    backgroundColor: colors.bg,
                     color: colors.text,
-                    borderLeft: `3px solid ${active ? colors.border : "transparent"}`,
-                    ...(active ? { ringColor: colors.border } : {}),
+                    borderLeft: `3px solid ${colors.border}`,
                   }}
                 >
                   {formatCourseCode(cid)}
-                </button>
+                </span>
               );
             })}
           </div>

@@ -148,7 +148,7 @@ export function SemesterExplorer({
   }, [tabs, planGraph, requirementsPackage]);
 
   const [activeTk, setActiveTk] = useState(defaultTk);
-  const [selections, setSelections] = useState<Record<string, string>>({});
+  const [selectedElectives, setSelectedElectives] = useState<Set<string>>(new Set());
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<string | null>(null);
   const nodeById = useMemo(() => new Map(planGraph.nodes.map((n) => [n.id, n])), [planGraph.nodes]);
@@ -162,32 +162,30 @@ export function SemesterExplorer({
   const requiredNodes = semesterNodes.filter((n) => isMajorBlock(n.requirementBlockId, requirementsPackage));
 
   const electiveGroups: ElectiveGroup[] = useMemo(() => {
-    // Start with blocks that already have nodes in this semester
     const blockIds = new Set(semesterNodes.filter((n) => isElectiveBlock(n.requirementBlockId, requirementsPackage)).map((n) => n.requirementBlockId));
-    // Also include ALL unfulfilled elective/pathways/free blocks — the student
-    // could take any of these this semester if prerequisites are met
     for (const b of requirementsPackage?.requirementBlocks ?? []) {
       if (ELECTIVE_CATS.has(b.category) && b.remaining > 0) blockIds.add(b.id);
     }
     return [...blockIds].map((blockId) => {
       const block = blockFor(blockId, requirementsPackage);
-      const options = buildElectiveOptions(blockId, semesterNodes, requirementsPackage);
+      const allOptions = buildElectiveOptions(blockId, semesterNodes, requirementsPackage);
+      const options = allOptions.slice(0, 3);
       const anchor = semesterNodes.find((n) => n.requirementBlockId === blockId);
-      const selected = selections[`${activeTk}:${blockId}`] ?? anchor?.courseId ?? options[0]?.courseId;
+      const selected = options.find((o) => selectedElectives.has(o.courseId))?.courseId ?? undefined;
       return { blockId, title: block?.name ?? blockId.replace(/-/g, " "), pick: block?.remaining ?? block?.coursesNeeded ?? 1, options, anchor, selected };
-    }).filter((g) => g.options.length > 0).slice(0, 6);
-  }, [semesterNodes, requirementsPackage, selections, activeTk]);
+    }).filter((g) => g.options.length > 0).slice(0, 3);
+  }, [semesterNodes, requirementsPackage, selectedElectives, activeTk]);
 
   const displayNodes = useMemo(
     () =>
       semesterNodes.map((n) => {
         if (!isElectiveBlock(n.requirementBlockId, requirementsPackage)) return n;
-        const sel = selections[`${activeTk}:${n.requirementBlockId}`];
-        if (!sel || sel === n.courseId) return n;
-        const opt = electiveGroups.find((g) => g.blockId === n.requirementBlockId)?.options.find((o) => o.courseId === sel);
-        return { ...n, courseId: sel, instructor: opt?.instructor ?? n.instructor, score: opt?.score ?? n.score };
+        const group = electiveGroups.find((g) => g.blockId === n.requirementBlockId);
+        const sel = group?.options.find((o) => selectedElectives.has(o.courseId));
+        if (!sel || sel.courseId === n.courseId) return n;
+        return { ...n, courseId: sel.courseId, instructor: sel.instructor ?? n.instructor, score: sel.score ?? n.score };
       }),
-    [semesterNodes, selections, activeTk, electiveGroups, requirementsPackage]
+    [semesterNodes, selectedElectives, electiveGroups, requirementsPackage]
   );
 
   const totalCredits = sumSemesterCredits(displayNodes);
@@ -195,22 +193,26 @@ export function SemesterExplorer({
   const conflicts = planGraph.verifierIssues.filter((i) => i.severity === "error" && i.nodeIds.some((id) => activeSemester?.nodeIds.includes(id)));
 
   const applySelection = useCallback(
-    (blockId: string, courseId: string) => {
-      const key = `${activeTk}:${blockId}`;
-      setSelections((prev) => ({ ...prev, [key]: courseId }));
+    (_blockId: string, courseId: string) => {
+      setSelectedElectives((prev) => {
+        const next = new Set(prev);
+        if (next.has(courseId)) {
+          next.delete(courseId);
+        } else {
+          next.add(courseId);
+        }
+        return next;
+      });
       setSelectedDetail(courseId);
     },
-    [activeTk]
+    []
   );
 
   // Notify parent of currently selected elective courses
   useEffect(() => {
     if (!onSelectionsChange) return;
-    const selectedIds = electiveGroups
-      .map((g) => g.selected)
-      .filter((id): id is string => Boolean(id));
-    onSelectionsChange(selectedIds);
-  }, [electiveGroups, onSelectionsChange]);
+    onSelectionsChange([...selectedElectives]);
+  }, [selectedElectives, onSelectionsChange]);
 
   // ── SVG graph layout ──────────────────────────────────────────────
   const graphLayout = useMemo(() => {
@@ -253,7 +255,7 @@ export function SemesterExplorer({
           courseId: opt.courseId,
           x: centerX - totalWidth / 2 + col * COL_WIDTH,
           y: junctionY + 65 + row * ROW_HEIGHT_OPT,
-          selected: opt.courseId === group.selected,
+          selected: selectedElectives.has(opt.courseId),
         };
       });
 
@@ -268,7 +270,7 @@ export function SemesterExplorer({
     const svgWidth = Math.max(maxWidth, 600);
 
     return { reqPositions, groupLayouts, svgWidth, svgHeight, reqY, padX };
-  }, [requiredNodes, electiveGroups]);
+  }, [requiredNodes, electiveGroups, selectedElectives]);
 
   if (!activeSemester) {
     return <div className="glass-panel rounded-2xl p-6 text-sm text-slate-600">No future semesters in this plan yet.</div>;
