@@ -1,19 +1,119 @@
 @import "tailwindcss";
 
+/*
+ * Hokie Line — the degree plan as a transit map.
+ * Inspired by Harry Beck's 1933 London Underground diagram and Massimo
+ * Vignelli's 1972 New York subway map, printed on Hokie Stone paper in
+ * Virginia Tech maroon and burnt orange.
+ */
+
 :root {
-  --background: #f8fafc;
-  --foreground: #1e293b;
-  --surface: #ffffff;
-  --surface-elevated: #f1f5f9;
-  --accent-primary: #861f41;
-  --accent-secondary: #e87722;
-  --accent-green: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-red: #dc2626;
-  --vt-maroon: #861f41;
-  --vt-orange: #e87722;
-  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-card-hover: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --paper: #e3e2de;          /* Hokie Stone limestone */
+  --paper-raised: #f5f4f1;   /* cards, panels */
+  --paper-sunk: #d6d4cf;     /* semester zone bands */
+  --ink: #1d1a24;            /* plum-black ink, pulled from maroon */
+  --ink-soft: #4a4553;
+  --maroon: #861f41;         /* VT Chicago Maroon */
+  --orange: #e5751f;         /* VT Burnt Orange */
+  --line-blue: #2f5da8;
+  --line-green: #2e8b57;
+  --line-yellow: #e0a400;
+  --line-teal: #127a86;
+  --danger: #c8322f;
+
+  /* Legacy names still referenced by components */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --surface: var(--paper-raised);
+  --surface-elevated: #fbfaf8;
+  --vt-maroon: var(--maroon);
+  --vt-orange: var(--orange);
+  --accent-cyan: var(--maroon);
+  --accent-amber: var(--orange);
+  --accent-green: var(--line-green);
+  --accent-red: var(--danger);
+  --glow-cyan: 0 0 0 3px rgba(134, 31, 65, 0.18);
+  --glow-amber: 0 0 0 3px rgba(229, 117, 31, 0.22);
+  --glow-green: 0 0 0 3px rgba(46, 139, 87, 0.2);
+  --glow-red: 0 0 0 3px rgba(200, 50, 47, 0.22);
+}
+
+/*
+ * Palette remap. Components were written against a dark slate/cyan theme;
+ * these scales are inverted so the same utility classes read correctly on
+ * paper: slate becomes ink-on-stone, cyan becomes maroon, amber becomes VT
+ * orange, and the status colors darken for contrast on a light ground.
+ */
+@theme {
+  --color-slate-50: #1d1a24;
+  --color-slate-100: #26222e;
+  --color-slate-200: #332e3b;
+  --color-slate-300: #45404d;
+  --color-slate-400: #56515e;
+  --color-slate-500: #625d69;
+  --color-slate-600: #8a8590;
+  --color-slate-700: #b2aeb4;
+  --color-slate-800: #cfccc8;
+  --color-slate-900: #f5f4f1;
+  --color-slate-950: #fbfaf8;
+
+  --color-cyan-50: #3b0a1c;
+  --color-cyan-100: #4e0f26;
+  --color-cyan-200: #63152f;
+  --color-cyan-300: #751b39;
+  --color-cyan-400: #861f41;
+  --color-cyan-500: #9a2a50;
+  --color-cyan-600: #b04a6c;
+  --color-cyan-700: #c97a94;
+  --color-cyan-800: #e2b5c3;
+  --color-cyan-900: #f1dae1;
+  --color-cyan-950: #f8edf1;
+
+  --color-amber-50: #4a2106;
+  --color-amber-100: #5c2a08;
+  --color-amber-200: #733509;
+  --color-amber-300: #8f420c;
+  --color-amber-400: #d0661a;
+  --color-amber-500: #e5751f;
+  --color-amber-600: #ec924f;
+  --color-amber-700: #f2b283;
+  --color-amber-800: #f7d2b5;
+  --color-amber-900: #fbe8d9;
+  --color-amber-950: #fdf4ec;
+
+  --color-emerald-50: #0e3b26;
+  --color-emerald-100: #124a30;
+  --color-emerald-200: #17593a;
+  --color-emerald-300: #1d6b45;
+  --color-emerald-400: #237f52;
+  --color-emerald-500: #2e8b57;
+  --color-emerald-600: #4fa274;
+  --color-emerald-700: #7dbe98;
+  --color-emerald-800: #b0d9c0;
+  --color-emerald-900: #d8ede0;
+  --color-emerald-950: #edf6f0;
+
+  --color-red-50: #4a0d0d;
+  --color-red-100: #5e1111;
+  --color-red-200: #761616;
+  --color-red-300: #8f1c1c;
+  --color-red-400: #b42525;
+  --color-red-500: #c8322f;
+  --color-red-600: #d65d5a;
+  --color-red-700: #e48e8b;
+  --color-red-800: #f0bdbb;
+  --color-red-900: #f8dfde;
+  --color-red-950: #fcf0ef;
+
+  /* Secondary hues used by agent badges and progress bars */
+  --color-violet-300: #2f5da8;
+  --color-violet-400: #2f5da8;
+  --color-violet-600: #2f5da8;
+  --color-purple-300: #2f5da8;
+  --color-pink-300: #127a86;
+  --color-pink-500: #127a86;
+  --color-pink-600: #127a86;
+  --color-blue-300: #861f41;
 }
 
 @theme inline {
@@ -21,11 +121,14 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
-  --color-accent: var(--accent-primary);
+  --color-accent: var(--maroon);
   --color-vt-maroon: var(--vt-maroon);
   --color-vt-orange: var(--vt-orange);
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-jetbrains);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --font-sans: var(--font-barlow);
+  --font-display: var(--font-barlow-condensed);
+  --font-mono: var(--font-barlow-condensed);
 }
 
 html {
@@ -33,73 +136,145 @@ html {
 }
 
 body {
-  background-color: #f8fafc;
-  color: #1e293b;
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-barlow), "Helvetica Neue", Arial, sans-serif;
   min-height: 100vh;
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--font-barlow-condensed), var(--font-barlow), "Arial Narrow", sans-serif;
+  letter-spacing: -0.005em;
+}
+
+/* Station-sign type: condensed, tabular. Replaces the old monospace accent. */
 .font-mono-accent {
-  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-family: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
 }
 
-/* Subtle page texture (replaces circuit grid) */
+/* Page ground: flat stone. The old circuit grid class now just sets paper. */
 .bg-circuit-grid {
-  background-color: #f8fafc;
-  background-image: radial-gradient(
-    ellipse 80% 50% at 50% -10%,
-    rgba(134, 31, 65, 0.04),
-    transparent 55%
-  );
+  background-color: var(--paper);
 }
 
+/* Panels are printed cards, not glass. */
 .glass-panel {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: var(--shadow-card);
+  background: var(--paper-raised);
+  border: 1px solid rgba(29, 26, 36, 0.14);
+  box-shadow: 0 1px 0 rgba(29, 26, 36, 0.06);
 }
 
 .glow-border-cyan {
-  box-shadow: var(--shadow-card);
-  border-color: #e2e8f0;
+  box-shadow: inset 0 0 0 2px var(--maroon);
 }
 
+/* Headings no longer glow. */
 .glow-text-cyan {
   text-shadow: none;
 }
 
-@keyframes tree-node-live {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
-  }
-}
-
-.animate-tree-node-live {
-  animation: tree-node-live 2s ease-in-out infinite;
-}
-
+/* Active agent / in-progress indicator: an orange ring that breathes. */
 @keyframes pulse-glow {
   0%,
   100% {
-    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(229, 117, 31, 0.45);
   }
   50% {
-    opacity: 0.85;
+    box-shadow: 0 0 0 5px rgba(229, 117, 31, 0);
   }
 }
 
 .animate-pulse-glow {
-  animation: pulse-glow 2.5s ease-in-out infinite;
+  animation: pulse-glow 2s ease-out infinite;
 }
 
-/* Custom scrollbar — light theme */
+/* "Now boarding": the station you're currently taking pulses like a live train. */
+@keyframes tree-node-live {
+  0% {
+    box-shadow: 0 0 0 0 rgba(229, 117, 31, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(229, 117, 31, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 117, 31, 0);
+  }
+}
+
+.animate-tree-node-live {
+  animation: tree-node-live 1.8s ease-out infinite;
+}
+
+@keyframes trace-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.circuit-trace-animated {
+  stroke-dasharray: 8 6;
+  animation: trace-flow 1.2s linear infinite;
+}
+
+/* One orchestrated moment: the hero line draws itself once on load. */
+@keyframes line-draw {
+  from {
+    stroke-dashoffset: var(--line-length, 1600);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes station-pop {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.hero-line {
+  stroke-dasharray: var(--line-length, 1600);
+  stroke-dashoffset: var(--line-length, 1600);
+  animation: line-draw 2.2s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.hero-station {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  animation: station-pop 0.45s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-line,
+  .hero-station,
+  .animate-pulse-glow,
+  .animate-tree-node-live,
+  .circuit-trace-animated {
+    animation: none;
+    stroke-dashoffset: 0;
+    transform: none;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--maroon);
+  outline-offset: 2px;
+}
+
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: rgba(29, 26, 36, 0.35) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -108,19 +283,15 @@ body {
 }
 
 *::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgba(29, 26, 36, 0.3);
   border-radius: 999px;
 }
 
-*::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
 ::selection {
-  background: rgba(134, 31, 65, 0.18);
-  color: #0f172a;
+  background: rgba(229, 117, 31, 0.35);
+  color: var(--ink);
 }

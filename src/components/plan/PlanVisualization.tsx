@@ -30,13 +30,16 @@ import { Button } from "@/components/ui/Button";
 import {
   branchColorForStatus,
   compareSemesters,
+  computeLineColors,
   computeTreeLayout,
   formatSemesterLabel,
   getNodePortIn,
   getNodePortOut,
   nodeFillForStatus,
   nodeStrokeForStatus,
+  nodeStrokeWidthForStatus,
   termKey,
+  transitPath,
   TREE_LAYOUT,
 } from "@/components/plan/tree-layout";
 import { cn, formatCourseCode } from "@/lib/utils";
@@ -140,7 +143,7 @@ function SemesterDropColumn({
       ref={setNodeRef}
       className={cn(
         "absolute top-0 rounded-xl border border-transparent transition-colors",
-        isOver && "border-[var(--vt-orange)]/40 bg-orange-50"
+        isOver && "border-2 border-dashed border-[var(--maroon)] bg-[var(--maroon)]/5"
       )}
       style={{
         left: x - 110,
@@ -157,15 +160,15 @@ function DragTreeNodePreview({ node }: { node: PlanNode }) {
   return (
     <div className="flex items-center gap-2 opacity-90">
       <span
-        className="rounded-full shadow-lg"
+        className="rounded-full shadow-[0_6px_16px_rgba(29,26,36,0.25)]"
         style={{
           width: r * 2,
           height: r * 2,
-          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55), transparent 50%), ${nodeFillForStatus(node.status)}`,
-          border: `2px solid ${nodeStrokeForStatus(node.status)}`,
+          background: nodeFillForStatus(node.status),
+          border: `${nodeStrokeWidthForStatus(node.status)}px solid ${nodeStrokeForStatus(node.status)}`,
         }}
       />
-      <span className="font-mono-accent text-xs font-bold text-slate-900">
+      <span className="rounded bg-[var(--paper-raised)] px-1.5 py-0.5 font-mono-accent text-sm font-bold text-[var(--ink)] shadow-sm">
         {formatCourseCode(node.courseId)}
       </span>
     </div>
@@ -209,6 +212,10 @@ export function PlanVisualization({
   }, [planGraph]);
 
   const layout = useMemo(() => computeTreeLayout(graph), [graph]);
+  const lineColors = useMemo(
+    () => computeLineColors(graph, layout.positions),
+    [graph, layout.positions]
+  );
 
   const nodeMap = useMemo(() => {
     const m = new Map<string, PlanNode>();
@@ -340,36 +347,53 @@ export function PlanVisualization({
 
         const from = getNodePortOut(fromPos);
         const to = getNodePortIn(toPos);
-        const dx = to.x - from.x;
-        const c1x = from.x + Math.max(48, dx * 0.42);
-        const c2x = to.x - Math.max(48, dx * 0.42);
-        const d = `M ${from.x} ${from.y} C ${c1x} ${from.y}, ${c2x} ${to.y}, ${to.x} ${to.y}`;
+        const d = transitPath(from, to);
 
         const inChain =
           highlightActive &&
           hoverHighlight.has(edge.from) &&
           hoverHighlight.has(edge.to);
+        const fromNode = nodeMap.get(edge.from);
         const toNode = nodeMap.get(edge.to);
-        const status = toNode?.status ?? "planned_future";
-        const stroke = branchColorForStatus(status, inChain);
-        const opacity = highlightActive ? (inChain ? 0.8 : 0.1) : 0.25;
-        const strokeWidth = highlightActive ? (inChain ? 2.5 : 1) : 1.5;
+        const traveled = fromNode?.status === "completed" && toNode?.status === "completed";
+        const stroke =
+          lineColors.get(edge.from) ??
+          branchColorForStatus(toNode?.status ?? "planned_future", inChain);
+        const opacity = highlightActive
+          ? inChain
+            ? 1
+            : 0.12
+          : traveled
+            ? 0.4
+            : 0.95;
+        const strokeWidth = inChain ? 7 : 5;
 
         return (
-          <path
-            key={`${edge.from}-${edge.to}`}
-            d={d}
-            fill="none"
-            stroke={stroke}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            opacity={opacity}
-            markerEnd="url(#branch-arrowhead)"
-            filter={inChain ? "url(#organic-glow)" : undefined}
-          />
+          <g key={`${edge.from}-${edge.to}`}>
+            {/* Paper-colored casing so crossing lines read as separate tracks */}
+            <path
+              d={d}
+              fill="none"
+              stroke="var(--paper-raised)"
+              strokeWidth={strokeWidth + 4}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={highlightActive && !inChain ? 0 : 1}
+            />
+            <path
+              d={d}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={opacity}
+              style={{ transition: "opacity 180ms ease, stroke-width 180ms ease" }}
+            />
+          </g>
         );
       });
-  }, [graph.edges, highlightActive, hoverHighlight, layout.positions, nodeMap]);
+  }, [graph.edges, highlightActive, hoverHighlight, layout.positions, lineColors, nodeMap]);
 
   const electiveDecorPath = useMemo(() => {
     const electives = [...layout.positions.values()].filter((p) => p.isElective);
@@ -384,19 +408,19 @@ export function PlanVisualization({
           x={TREE_LAYOUT.startX - 52}
           y={y + 5}
           textAnchor="end"
-          className="fill-slate-500 italic"
-          style={{ fontSize: 14, fontStyle: "italic" }}
+          fill="var(--ink-soft)"
+          style={{ fontSize: 16, fontWeight: 700, fontFamily: "var(--font-barlow-condensed)" }}
         >
           Electives
         </text>
         <path
           d={d}
           fill="none"
-          stroke="rgba(148, 163, 184, 0.35)"
-          strokeWidth={2.5}
+          stroke="var(--ink)"
+          strokeWidth={2}
           strokeLinecap="round"
-          strokeDasharray="6 8"
-          opacity={0.5}
+          strokeDasharray="2 7"
+          opacity={0.45}
         />
       </g>
     );
@@ -409,6 +433,17 @@ export function PlanVisualization({
   }, [graph.semesters]);
 
   const tooltipPos = hoveredNode ? layout.positions.get(hoveredNode.id) : undefined;
+
+  // "You are here": the semester the student is in now, or the next one up.
+  const currentTermKey = useMemo(() => {
+    const now =
+      graph.nodes.find((n) => n.status === "in_progress") ??
+      graph.nodes.find((n) => n.status === "planned_next");
+    return now ? termKey(now.semester) : null;
+  }, [graph.nodes]);
+
+  const headerY = 44;
+  const bandLeftOffset = 56;
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -444,7 +479,8 @@ export function PlanVisualization({
         <TreeLegend />
 
         <div
-          className="relative max-h-[min(75vh,780px)] overflow-x-auto overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          className="relative max-h-[min(75vh,780px)] overflow-x-auto overflow-y-auto rounded-xl border border-[var(--ink)]/15 p-4"
+          style={{ backgroundColor: "var(--paper-raised)" }}
           onWheel={handleWheel}
         >
           <motion.div
@@ -462,76 +498,65 @@ export function PlanVisualization({
                 viewBox={`0 0 ${layout.width} ${layout.height}`}
                 aria-hidden
               >
-                <defs>
-                  <pattern
-                    id="tree-grid"
-                    width="32"
-                    height="32"
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <path
-                      d="M 32 0 L 0 0 0 32"
-                      fill="none"
-                      stroke="rgba(148, 163, 184, 0.12)"
-                      strokeWidth="1"
-                    />
-                  </pattern>
-                  <filter id="organic-glow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="1.2" result="blur" />
-                    <feMerge>
-                      <feMergeNode in="blur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                  <marker
-                    id="branch-arrowhead"
-                    markerWidth="7"
-                    markerHeight="7"
-                    refX="6"
-                    refY="3.5"
-                    orient="auto"
-                    markerUnits="strokeWidth"
-                  >
-                    <path d="M0,0 L7,3.5 L0,7 Z" fill="context-stroke" />
-                  </marker>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#tree-grid)" />
+                {/* Semester zones, like fare zones on a transit map */}
+                {layout.semesterColumns.map((col, i) => (
+                  <rect
+                    key={`zone-${termKey(col.term)}`}
+                    x={col.x - bandLeftOffset}
+                    y={0}
+                    width={TREE_LAYOUT.columnGap}
+                    height={layout.height}
+                    fill={
+                      termKey(col.term) === currentTermKey
+                        ? "rgba(229, 117, 31, 0.08)"
+                        : i % 2 === 0
+                          ? "var(--paper-sunk)"
+                          : "transparent"
+                    }
+                    opacity={termKey(col.term) === currentTermKey ? 1 : 0.35}
+                  />
+                ))}
                 {electiveDecorPath}
                 {branchPaths}
                 {layout.semesterColumns.map((col) => {
                   const credits = semesterCreditsByKey.get(termKey(col.term)) ?? 0;
-                  const label = `${formatSemesterLabel(col.term)} · ${credits}cr`;
-                  const pillW = Math.max(120, label.length * 7.2 + 28);
+                  const isNow = termKey(col.term) === currentTermKey;
+                  const left = col.x - bandLeftOffset + 16;
                   return (
                     <g key={termKey(col.term)}>
-                      <rect
-                        x={col.x - pillW / 2}
-                        y={col.labelY - 18}
-                        width={pillW}
-                        height={26}
-                        rx={13}
-                        fill="#ffffff"
-                        stroke="#e2e8f0"
-                        strokeWidth={1}
-                      />
                       <text
-                        x={col.x}
-                        y={col.labelY}
-                        textAnchor="middle"
-                        className="fill-slate-800 font-bold"
-                        style={{ fontSize: 18, fontWeight: 700 }}
+                        x={left}
+                        y={headerY}
+                        fill="var(--ink)"
+                        style={{
+                          fontSize: 22,
+                          fontWeight: 800,
+                          fontFamily: "var(--font-barlow-condensed)",
+                        }}
                       >
-                        {label}
+                        {formatSemesterLabel(col.term)}
                       </text>
-                      <line
-                        x1={col.x - 52}
-                        y1={col.labelY + 10}
-                        x2={col.x + 52}
-                        y2={col.labelY + 10}
-                        stroke="rgba(148, 163, 184, 0.5)"
-                        strokeWidth={1.5}
-                        strokeLinecap="round"
-                      />
+                      <text
+                        x={left}
+                        y={headerY + 20}
+                        fill="var(--ink-soft)"
+                        style={{ fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}
+                      >
+                        {credits} credits
+                      </text>
+                      {isNow ? (
+                        <g transform={`translate(${left + 84}, ${headerY + 15})`}>
+                          <circle r={7} fill="var(--orange)" stroke="var(--ink)" strokeWidth={2} />
+                          <text
+                            x={13}
+                            y={4}
+                            fill="var(--ink)"
+                            style={{ fontSize: 13, fontWeight: 700 }}
+                          >
+                            You are here
+                          </text>
+                        </g>
+                      ) : null}
                     </g>
                   );
                 })}
@@ -591,7 +616,7 @@ export function PlanVisualization({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="fixed bottom-8 left-1/2 z-50 max-w-md -translate-x-1/2 rounded-xl border border-red-200 bg-white px-4 py-3 text-center text-sm text-red-700 shadow-lg"
+              className="fixed bottom-8 left-1/2 z-50 max-w-md -translate-x-1/2 rounded-xl border border-red-500/40 bg-slate-950/95 px-4 py-3 text-center text-sm text-red-100 shadow-xl backdrop-blur-md"
               role="status"
             >
               {moveError}

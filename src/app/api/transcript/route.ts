@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "File must be a PDF" }, { status: 400 });
   }
 
-  const uploadDir = join(tmpdir(), "hokie-pathfinder-uploads");
+  const uploadDir = join(tmpdir(), "artisan-uploads");
   await mkdir(uploadDir, { recursive: true });
   const tempPath = join(uploadDir, `${randomUUID()}.pdf`);
 

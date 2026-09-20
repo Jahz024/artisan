@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { Plus, Volume2, VolumeX } from "lucide-react";
 import type { Session } from "next-auth";
 import type { PlanSummary } from "@/types/plan";
-import { CircuitBackground } from "@/components/home/CircuitBackground";
+import { HokieLineHero } from "@/components/home/HokieLineHero";
 import { PlanCard } from "@/components/home/PlanCard";
 import { Button } from "@/components/ui/Button";
 import { useSoundSettings } from "@/components/providers/SoundProvider";
@@ -34,14 +34,18 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
   }, [session?.user]);
 
   return (
-    <div className="relative flex min-h-full flex-1 flex-col bg-slate-50">
-      <header className="relative z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-5 lg:px-10">
+    <div className="relative flex min-h-full flex-1 flex-col bg-circuit-grid">
+      <header className="relative z-10 flex items-center justify-between px-6 py-5 lg:px-10">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--vt-maroon)] text-sm font-bold text-white shadow-sm">
-            VT
+          {/* Roundel-style mark: an interchange station */}
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-full border-[5px] border-[var(--maroon)] bg-white"
+            aria-hidden
+          >
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--orange)]" />
           </span>
-          <span className="text-lg font-semibold tracking-tight text-slate-900">
-            Hokie <span className="text-[var(--vt-orange)]">Pathfinder</span>
+          <span className="font-mono-accent text-2xl font-extrabold text-[var(--ink)]">
+            Artisan
           </span>
         </Link>
         <div className="flex items-center gap-2">
@@ -55,7 +59,7 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
             {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
           </Button>
           {session?.user ? (
-            <span className="hidden text-sm text-slate-600 sm:inline">
+            <span className="hidden text-sm text-slate-400 sm:inline">
               {session.user.name ?? session.user.email}
             </span>
           ) : null}
@@ -63,28 +67,31 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
       </header>
 
       {!session?.user ? (
-        <main className="relative flex flex-1 flex-col items-center justify-center px-6 pb-24 pt-8 text-center">
-          <CircuitBackground />
+        <main className="relative flex flex-1 flex-col justify-center px-6 pb-16 pt-6 lg:px-10">
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative z-10 max-w-2xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className="relative z-10 mx-auto w-full max-w-6xl"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[var(--vt-maroon)]">
-              Virginia Tech · Degree planning
-            </p>
-            <h1 className="mt-4 text-4xl font-bold leading-tight text-slate-900 sm:text-5xl">
-              Map your path to graduation
+            <h1 className="max-w-3xl text-5xl font-extrabold leading-[0.95] text-[var(--ink)] sm:text-7xl">
+              Map your route to graduation
             </h1>
-            <p className="mt-4 text-lg text-slate-600">
-              Upload your transcript, set preferences, and let five AI agents build a clear
-              prerequisite map — optimized for professors, rigor, and your schedule.
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-[var(--ink-soft)]">
+              Upload your transcript and tell us how you like to learn. Five agents check VT
+              requirements, years of past timetables, and professor ratings, then draw your degree
+              as a map you can rearrange.
             </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+
+            <div className="mt-10 -mx-2 sm:mx-0">
+              <HokieLineHero />
+            </div>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button
                 type="button"
                 onClick={() => signIn("google", { callbackUrl: "/" })}
-                className="min-w-[200px]"
+                className="min-w-[220px]"
               >
                 Sign in with Google
               </Button>
@@ -99,10 +106,12 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
                   })
                 }
               >
-                Demo login
+                Try the demo
               </Button>
+              <p className="text-sm text-[var(--ink-soft)] sm:ml-2">
+                Demo account: demo@vt.edu / demo
+              </p>
             </div>
-            <p className="mt-4 text-xs text-slate-500">Demo: demo@vt.edu / password: demo</p>
           </motion.div>
         </main>
       ) : (
@@ -112,11 +121,13 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
               <motion.h1
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-3xl font-bold text-slate-900"
+                className="text-5xl font-extrabold leading-none text-[var(--ink)]"
               >
-                Hey, {session.user.name?.split(" ")[0] ?? "Hokie"} 👋
+                Your routes, {session.user.name?.split(" ")[0] ?? "Hokie"}
               </motion.h1>
-              <p className="mt-1 text-slate-600">Your saved academic plans appear here.</p>
+              <p className="mt-2 text-[var(--ink-soft)]">
+                Open a saved plan to keep editing, or map a new one.
+              </p>
             </div>
             <Link href="/create">
               <Button type="button" className="w-full sm:w-auto">
@@ -132,14 +143,15 @@ export function HomeDashboard({ session: initialSession }: HomeDashboardProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="mt-16 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm"
+              className="mt-12 rounded-xl border-[3px] border-dashed border-[var(--ink)]/25 p-12"
             >
-              <p className="text-lg text-slate-800">No plans yet — start your first roadmap.</p>
-              <p className="mt-2 text-sm text-slate-500">
-                Upload a transcript or use demo data to generate your degree plan.
+              <p className="font-mono-accent text-2xl font-bold text-[var(--ink)]">No plans yet</p>
+              <p className="mt-2 max-w-md text-[var(--ink-soft)]">
+                Upload your transcript, or use the demo data, and the agents will draw your first
+                route to graduation.
               </p>
               <Link href="/create" className="mt-6 inline-block">
-                <Button type="button">Start planning</Button>
+                <Button type="button">Create new plan</Button>
               </Link>
             </motion.div>
           ) : (

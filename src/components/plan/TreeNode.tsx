@@ -10,6 +10,7 @@ import { DEMO_COURSE_TITLES } from "@/lib/demo-plan";
 import {
   nodeFillForStatus,
   nodeStrokeForStatus,
+  nodeStrokeWidthForStatus,
   TREE_LAYOUT,
 } from "@/components/plan/tree-layout";
 
@@ -110,44 +111,46 @@ export function TreeNode({
         className={cn(
           "relative flex shrink-0 items-center justify-center rounded-full transition-shadow duration-200",
           node.status === "in_progress" && "animate-tree-node-live",
-          highlighted && "ring-2 ring-emerald-400/60 shadow-md",
-          selected && "ring-[3px] ring-[#E87722] shadow-md",
-          suggestionHighlight && "ring-2 ring-violet-400/70 shadow-sm",
-          flashError && "ring-[3px] ring-red-500 shadow-md"
+          selected && "ring-[3px] ring-[var(--orange)] ring-offset-2 ring-offset-[var(--paper-raised)]",
+          suggestionHighlight && "ring-2 ring-[var(--line-blue)] ring-offset-2 ring-offset-[var(--paper-raised)]",
+          flashError && "ring-[3px] ring-[var(--danger)] ring-offset-2 ring-offset-[var(--paper-raised)]"
         )}
         style={{
           width: diameter,
           height: diameter,
-          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55), transparent 50%), ${nodeFillForStatus(node.status)}`,
-          border: `2px solid ${nodeStrokeForStatus(node.status)}`,
+          background: nodeFillForStatus(node.status),
+          border: `${nodeStrokeWidthForStatus(node.status)}px ${
+            node.confidence === "low" ? "dashed" : "solid"
+          } ${nodeStrokeForStatus(node.status)}`,
         }}
       >
         {showWarningBadge ? (
-          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white shadow-sm">
+          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full border-2 border-[var(--paper-raised)] bg-[var(--danger)] text-white">
             <AlertTriangle className="h-2.5 w-2.5" />
           </span>
         ) : null}
       </span>
 
-      <div className="flex min-w-0 flex-col">
+      {/* Station name, set like a map label */}
+      <div className="flex min-w-0 flex-col rounded bg-[var(--paper-raised)]/85 px-1 py-0.5">
         <span
           className={cn(
-            "whitespace-nowrap font-mono-accent text-xs font-bold leading-none text-slate-900",
-            dimmed && "text-slate-400"
+            "whitespace-nowrap font-mono-accent text-[15px] font-bold leading-none text-[var(--ink)]",
+            node.status === "completed" && "text-[var(--ink-soft)]",
+            dimmed && "opacity-60"
           )}
         >
           {formatCourseCode(node.courseId)}
+          <span className="ml-1.5 text-[11px] font-semibold text-[var(--ink-soft)]">
+            {credits} cr
+          </span>
         </span>
-        {localHover ? (
-          <span className="mt-0.5 max-w-[140px] truncate text-[10px] leading-tight text-slate-600">
+        {localHover || selected ? (
+          <span className="mt-1 max-w-[150px] truncate text-[11px] leading-tight text-[var(--ink-soft)]">
             {title}
           </span>
         ) : null}
       </div>
-
-      <span className="shrink-0 text-[9px] font-medium tabular-nums text-slate-500">
-        {credits}cr
-      </span>
     </motion.div>
   );
 }

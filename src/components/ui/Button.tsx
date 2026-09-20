@@ -10,15 +10,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
+// Buttons borrow from station signage: solid color plates with a heavy ink edge.
 const variants: Record<Variant, string> = {
   primary:
-    "bg-[var(--vt-maroon)] text-white border border-[var(--vt-maroon)] hover:bg-[#6d1835] hover:shadow-md",
+    "bg-[var(--maroon)] text-white border-2 border-[var(--maroon)] hover:bg-[#6f1936] hover:border-[#6f1936]",
   secondary:
-    "bg-white text-[var(--vt-maroon)] border border-slate-200 hover:border-[var(--vt-orange)] hover:text-[var(--vt-orange)] hover:shadow-sm",
+    "bg-[var(--paper-raised)] text-[var(--ink)] border-2 border-[var(--ink)] hover:bg-white",
   ghost:
-    "bg-transparent text-slate-600 border border-transparent hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900",
+    "bg-transparent text-[var(--ink-soft)] border-2 border-transparent hover:text-[var(--ink)] hover:bg-[var(--ink)]/5",
   danger:
-    "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:shadow-sm",
+    "bg-[var(--danger)] text-white border-2 border-[var(--danger)] hover:bg-[#a82826]",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -28,8 +29,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vt-maroon)]/40 disabled:opacity-50 disabled:pointer-events-none",
-          !disabled && !loading && "hover:scale-[1.02] active:scale-[0.98]",
+          "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 font-mono-accent text-[15px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--paper)] disabled:opacity-50 disabled:pointer-events-none",
           variants[variant],
           className
         )}
@@ -37,7 +37,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading ? (
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" />
         ) : null}
         {children}
       </button>

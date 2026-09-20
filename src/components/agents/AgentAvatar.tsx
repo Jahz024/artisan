@@ -7,36 +7,36 @@ import { cn } from "@/lib/utils";
 
 const AGENT_META: Record<
   AgentId,
-  { label: string; color: string; ring: string; Icon: typeof Search }
+  { label: string; color: string; glow: string; Icon: typeof Search }
 > = {
   agent1: {
     label: "Requirements",
-    color: "text-blue-600",
-    ring: "ring-blue-200",
+    color: "text-[#861F41]",
+    glow: "",
     Icon: Search,
   },
   agent2: {
     label: "Experience",
-    color: "text-purple-600",
-    ring: "ring-purple-200",
+    color: "text-[#2F5DA8]",
+    glow: "",
     Icon: Star,
   },
   agent3: {
     label: "Scheduler",
-    color: "text-emerald-600",
-    ring: "ring-emerald-200",
+    color: "text-[#2E8B57]",
+    glow: "",
     Icon: Layout,
   },
   agent4: {
     label: "Presentation",
-    color: "text-pink-600",
-    ring: "ring-pink-200",
+    color: "text-[#127A86]",
+    glow: "",
     Icon: Palette,
   },
   verifier: {
     label: "Verifier",
-    color: "text-amber-700",
-    ring: "ring-amber-200",
+    color: "text-[#C95F10]",
+    glow: "",
     Icon: Shield,
   },
 };
@@ -56,12 +56,12 @@ export function AgentAvatar({ agentId, active, completed, size = "md" }: AgentAv
   return (
     <motion.div
       className={cn(
-        "relative flex items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm",
+        "relative flex items-center justify-center rounded-full border-[3px] border-[var(--ink)] bg-white",
         dim,
-        active && cn("ring-2", meta.ring, "border-[var(--vt-maroon)]/30"),
-        active && "animate-pulse-glow"
+        active && meta.glow,
+        active && "animate-pulse-glow border-[var(--orange)]"
       )}
-      animate={active ? { scale: [1, 1.04, 1] } : { scale: 1 }}
+      animate={active ? { scale: [1, 1.05, 1] } : { scale: 1 }}
       transition={{ repeat: active ? Infinity : 0, duration: 2 }}
     >
       <meta.Icon className={cn(meta.color)} size={iconSize} aria-hidden />
@@ -69,7 +69,7 @@ export function AgentAvatar({ agentId, active, completed, size = "md" }: AgentAv
         <motion.span
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm"
+          className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--ink)] text-white"
         >
           <Check size={10} strokeWidth={3} />
         </motion.span>

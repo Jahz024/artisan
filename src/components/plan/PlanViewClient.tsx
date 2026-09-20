@@ -9,9 +9,7 @@ import type { AgentEvent, PlanGraph, PresentationSpec } from "@/types/contracts"
 import type { PlanDetail } from "@/types/plan";
 import { GraduationProgress } from "@/components/plan/GraduationProgress";
 import { PlanVisualization } from "@/components/plan/PlanVisualization";
-import { PlanFilters, SemesterCourseList } from "@/components/plan/PlanFilters";
 import { AgentActivityFeed } from "@/components/agents/AgentActivityFeed";
-import type { UserPreferences } from "@/types/contracts";
 import { Button } from "@/components/ui/Button";
 import { DEMO_PLAN_GRAPH, DEMO_PRESENTATION } from "@/lib/demo-plan";
 import { useAppSounds } from "@/lib/useAppSounds";
@@ -76,7 +74,6 @@ export function PlanViewClient() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creditSuggestionIds, setCreditSuggestionIds] = useState<Set<string>>(new Set());
-  const [draftPreferences, setDraftPreferences] = useState<UserPreferences | null>(null);
   const { play } = useAppSounds();
 
   const loadPlan = useCallback(async () => {
@@ -97,24 +94,6 @@ export function PlanViewClient() {
   useEffect(() => {
     void loadPlan();
   }, [loadPlan]);
-
-  useEffect(() => {
-    if (plan) setDraftPreferences(plan.preferences);
-  }, [plan?.id]);
-
-  const handlePreferencesChange = useCallback(
-    async (next: UserPreferences) => {
-      setDraftPreferences(next);
-      setPlan((p) => (p ? { ...p, preferences: next } : p));
-      if (!plan) return;
-      await fetch(`/api/plan/${planId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferences: next }),
-      });
-    },
-    [plan, planId]
-  );
 
   const startGeneration = useCallback(async () => {
     setGenerating(true);
@@ -183,11 +162,6 @@ export function PlanViewClient() {
           }
         : p
     );
-    setDraftPreferences((prev) =>
-      prev
-        ? { ...prev, semesterCreditOverrides: overrides }
-        : { ...plan.preferences, semesterCreditOverrides: overrides }
-    );
     await fetch(`/api/plan/${planId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -199,8 +173,8 @@ export function PlanViewClient() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-500">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#861F41]" />
+      <div className="flex min-h-screen items-center justify-center bg-circuit-grid text-slate-400">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin text-cyan-400" />
         Loading plan…
       </div>
     );
@@ -208,8 +182,8 @@ export function PlanViewClient() {
 
   if (error && !plan) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50">
-        <p className="text-red-600">{error}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-circuit-grid">
+        <p className="text-red-300">{error}</p>
         <Link href="/">
           <Button type="button">Back home</Button>
         </Link>
@@ -217,90 +191,73 @@ export function PlanViewClient() {
     );
   }
 
-  const preferences = draftPreferences ?? plan?.preferences;
-
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
-      <header className="border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-circuit-grid pb-32">
+      <header className="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5 lg:px-10">
           <div>
-            <Link href="/" className="text-xs text-slate-500 hover:text-[#861F41]">
+            <Link href="/" className="text-xs text-slate-500 hover:text-cyan-400">
               ← All plans
             </Link>
-            <h1 className="mt-1 text-2xl font-bold text-slate-900">{plan?.name}</h1>
+            <h1 className="mt-1 text-2xl font-bold text-slate-50">{plan?.name}</h1>
           </div>
           {plan?.status === "draft" && !generating ? (
-            <Button
-              type="button"
-              onClick={() => void startGeneration()}
-              className="border-[#861F41]/40 bg-[#861F41] text-white hover:bg-[#6d1834]"
-            >
+            <Button type="button" onClick={() => void startGeneration()}>
               Run agents
             </Button>
           ) : null}
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-6 py-8 lg:px-10">
         <motion.section
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:mb-8"
+          className="mb-8 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/80 to-slate-950/90 p-6 glow-border-cyan"
         >
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#861F41]">
-            Your academic path
+          <p className="font-mono-accent text-base font-bold text-[var(--ink-soft)]">
+            Circuit board view
           </p>
-          <h2 className="mt-2 text-xl font-semibold text-slate-900 sm:text-2xl">{spec.heroMessage}</h2>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700">
-            <GraduationCap className="h-4 w-4 text-[#E87722]" />
+          <h2 className="mt-2 text-2xl font-semibold text-slate-50">
+            {spec.heroMessage}
+          </h2>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-700/60 bg-slate-900/60 px-3 py-1 text-sm text-slate-300">
+            <GraduationCap className="h-4 w-4 text-[var(--vt-orange)]" />
             Est. graduation:{" "}
             {graph?.estimatedGraduation.label ??
               plan?.planGraph?.estimatedGraduation.label ??
               "TBD"}
           </div>
           {usingDemoPreview ? (
-            <p className="mt-3 text-xs text-amber-700">
+            <p className="mt-3 text-xs text-amber-300/90">
               Previewing demo graph — generate to replace with your personalized plan.
             </p>
           ) : null}
-          {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
         </motion.section>
 
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          <aside className="order-2 flex w-full shrink-0 flex-col gap-4 lg:order-1 lg:max-h-[calc(100vh-8rem)] lg:w-[380px] lg:overflow-y-auto lg:pr-1">
-            {preferences && graph ? (
-              <PlanFilters
-                planGraph={graph}
-                preferences={preferences}
-                onPreferencesChange={(next) => void handlePreferencesChange(next)}
-                onRegenerate={() => void startGeneration()}
-                regenerating={generating}
-              />
-            ) : null}
-            <AgentActivityFeed events={events} isGenerating={generating} />
-          </aside>
+        {graph ? <GraduationProgress planGraph={graph} /> : null}
 
-          <div className="order-1 min-w-0 flex-1 lg:order-2">
-            {graph ? <GraduationProgress planGraph={graph} /> : null}
+        {graph ? (
+          <PlanVisualization
+            planGraph={graph}
+            presentationSpec={spec}
+            onPlanChange={(g) => void persistGraph(g)}
+            semesterCreditOverrides={plan?.preferences.semesterCreditOverrides}
+            creditSuggestionIds={creditSuggestionIds}
+            onSemesterCreditTarget={(tk, target, ids) =>
+              void handleSemesterCreditTarget(tk, target, ids)
+            }
+          />
+        ) : (
+          <p className="text-center text-slate-500">No plan graph yet.</p>
+        )}
 
-            {graph ? (
-              <PlanVisualization
-                planGraph={graph}
-                presentationSpec={spec}
-                onPlanChange={(g) => void persistGraph(g)}
-                semesterCreditOverrides={plan?.preferences.semesterCreditOverrides}
-                creditSuggestionIds={creditSuggestionIds}
-                onSemesterCreditTarget={(tk, target, ids) =>
-                  void handleSemesterCreditTarget(tk, target, ids)
-                }
-              />
-            ) : (
-              <p className="text-center text-slate-500">No plan graph yet.</p>
-            )}
-
-            {graph ? <SemesterCourseList planGraph={graph} /> : null}
-          </div>
-        </div>
+        <AgentActivityFeed
+          events={events}
+          isGenerating={generating}
+          className="mt-8"
+        />
       </main>
     </div>
   );

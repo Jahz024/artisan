@@ -1,54 +1,68 @@
 "use client";
 
+import { LINE_PALETTE } from "@/components/plan/tree-layout";
+
+function Station({
+  fill,
+  stroke,
+  width = 3,
+  dashed,
+}: {
+  fill: string;
+  stroke: string;
+  width?: number;
+  dashed?: boolean;
+}) {
+  return (
+    <span
+      className="inline-block h-3.5 w-3.5 shrink-0 rounded-full"
+      style={{
+        background: fill,
+        border: `${width}px ${dashed ? "dashed" : "solid"} ${stroke}`,
+      }}
+      aria-hidden
+    />
+  );
+}
+
+/** Map key, in the spirit of the key box on a printed transit map. */
 export function TreeLegend() {
   return (
-    <div className="mb-3 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-[11px] leading-relaxed text-slate-600 shadow-sm">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-slate-400"
-            style={{ backgroundColor: "#94A3B8" }}
-            aria-hidden
-          />
+    <div className="glass-panel mb-3 rounded-lg px-4 py-3 text-[13px] leading-relaxed text-[var(--ink-soft)]">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <span className="font-mono-accent text-base font-bold text-[var(--ink)]">Map key</span>
+        <span className="inline-flex items-center gap-2">
+          <Station fill="#1D1A24" stroke="#1D1A24" width={2} />
           Completed
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-emerald-600"
-            style={{ backgroundColor: "#10B981" }}
-            aria-hidden
-          />
-          Taking Now
+        <span className="inline-flex items-center gap-2">
+          <Station fill="#E5751F" stroke="#1D1A24" />
+          Taking now
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-[#C4621A]"
-            style={{ backgroundColor: "#E87722" }}
-            aria-hidden
-          />
-          Next Up
+        <span className="inline-flex items-center gap-2">
+          <Station fill="#FFFFFF" stroke="#861F41" width={4} />
+          Next semester
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-amber-500"
-            style={{ backgroundColor: "#FBBF24" }}
-            aria-hidden
-          />
+        <span className="inline-flex items-center gap-2">
+          <Station fill="#FFFFFF" stroke="#1D1A24" />
           Planned
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            className="inline-block h-5 w-8 shrink-0 rounded-full bg-slate-100"
-            aria-hidden
-          >
-            <span className="block h-px w-full translate-y-[9px] bg-slate-300" />
+        <span className="inline-flex items-center gap-2">
+          <Station fill="#FFFFFF" stroke="#1D1A24" dashed />
+          Estimate
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <span className="flex gap-0.5" aria-hidden>
+            {LINE_PALETTE.slice(0, 4).map((c) => (
+              <span key={c} className="h-1.5 w-3 rounded-full" style={{ background: c }} />
+            ))}
           </span>
-          Prerequisite
+          Prerequisite lines
         </span>
       </div>
-      <p className="mt-1.5 text-slate-500">
-        Drag courses between semesters · Click to view details · Lines show prerequisites — a
-        course can&apos;t move before its prereqs
+      <p className="mt-1.5 text-[12px]">
+        Each colored line is a prerequisite chain. Drag a course to another semester, or to the
+        trash to replace it. A course can&apos;t move ahead of its prerequisites.
       </p>
     </div>
   );

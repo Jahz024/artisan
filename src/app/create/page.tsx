@@ -3,10 +3,10 @@ import { CreatePlanWizard } from "@/components/create/CreatePlanWizard";
 
 export default function CreatePlanPage() {
   return (
-    <div className="min-h-full bg-slate-50">
-      <div className="border-b border-slate-200 bg-white px-6 py-4">
-        <Link href="/" className="text-sm font-semibold text-slate-800">
-          Hokie <span className="text-[var(--vt-orange)]">Pathfinder</span>
+    <div className="min-h-full bg-circuit-grid">
+      <div className="border-b border-slate-800/80 bg-slate-950/50 px-6 py-4">
+        <Link href="/" className="font-mono-accent text-xl font-extrabold text-[var(--ink)]">
+          Artisan
         </Link>
       </div>
       <CreatePlanWizard />

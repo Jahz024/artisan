@@ -308,48 +308,142 @@ export function edgeWaveOffset(fromId: string, toId: string): number {
   return ((hash % 17) - 8) * 0.75;
 }
 
+/** Transit-line palette. Each prerequisite chain rides its own colored line. */
+export const LINE_PALETTE = [
+  "#861F41", // maroon
+  "#E5751F", // burnt orange
+  "#2F5DA8", // blue
+  "#2E8B57", // green
+  "#127A86", // teal
+  "#C99200", // mustard
+] as const;
+
+/**
+ * Assign every prerequisite-connected course to a "line". Roots (courses with
+ * no prerequisite parents) each start a new line; a course inherits the line
+ * of its first parent, so a chain like CS 1114 → 2114 → 3114 stays one color.
+ * Edges are colored by the line of the course they leave from, so where two
+ * lines meet the map reads like a transfer station.
+ */
+export function computeLineColors(
+  graph: PlanGraph,
+  positions: Map<string, TreeNodePosition>
+): Map<string, string> {
+  const parentsOf = new Map<string, string[]>();
+  for (const e of graph.edges) {
+    if (e.type !== "prerequisite") continue;
+    const list = parentsOf.get(e.to) ?? [];
+    list.push(e.from);
+    parentsOf.set(e.to, list);
+  }
+
+  const ordered = [...positions.values()]
+    .filter((p) => !p.isElective)
+    .sort((a, b) => a.columnIndex - b.columnIndex || a.y - b.y);
+
+  const lineOf = new Map<string, number>();
+  let nextLine = 0;
+  for (const pos of ordered) {
+    const parents = (parentsOf.get(pos.id) ?? []).filter((id) => lineOf.has(id));
+    if (parents.length === 0) {
+      lineOf.set(pos.id, nextLine++);
+    } else {
+      // Prefer the parent sitting closest vertically: the straightest track.
+      const best = parents.reduce((a, b) =>
+        Math.abs((positions.get(a)?.y ?? 0) - pos.y) <= Math.abs((positions.get(b)?.y ?? 0) - pos.y)
+          ? a
+          : b
+      );
+      lineOf.set(pos.id, lineOf.get(best)!);
+    }
+  }
+
+  const colors = new Map<string, string>();
+  lineOf.forEach((line, id) => colors.set(id, LINE_PALETTE[line % LINE_PALETTE.length]));
+  return colors;
+}
+
+/**
+ * Route an edge the way Beck and Vignelli drew track: horizontal runs joined
+ * by a single 45° diagonal, with softened corners.
+ */
+export function transitPath(
+  from: { x: number; y: number },
+  to: { x: number; y: number }
+): string {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  if (Math.abs(dy) < 1) return `M ${from.x} ${from.y} H ${to.x}`;
+
+  const minRun = 18;
+  const diag = Math.min(Math.abs(dy), Math.max(0, dx - minRun * 2));
+  const run = (dx - diag) / 2;
+  const sign = dy > 0 ? 1 : -1;
+
+  const a = { x: from.x + run, y: from.y };
+  // If the drop is steeper than 45°, finish it with a vertical segment.
+  const b = { x: a.x + diag, y: from.y + sign * diag };
+  const c = { x: b.x, y: to.y };
+  const r = Math.min(10, run, diag / 2 || 10);
+
+  const parts = [`M ${from.x} ${from.y}`, `H ${a.x - r}`, `Q ${a.x} ${a.y} ${a.x + r * 0.7} ${a.y + sign * r * 0.7}`];
+  if (Math.abs(c.y - b.y) > 1) {
+    parts.push(`L ${b.x - r * 0.4} ${b.y - sign * r * 0.4}`, `Q ${b.x} ${b.y} ${b.x} ${b.y + sign * r}`);
+    parts.push(`V ${c.y - sign * r}`, `Q ${c.x} ${c.y} ${c.x + r} ${c.y}`);
+  } else {
+    parts.push(`L ${b.x - r * 0.7} ${b.y - sign * r * 0.7}`, `Q ${b.x} ${b.y} ${b.x + r} ${b.y}`);
+  }
+  parts.push(`H ${to.x}`);
+  return parts.join(" ");
+}
+
 export function branchColorForStatus(status: PlanNode["status"], highlighted: boolean): string {
   switch (status) {
     case "completed":
-      return highlighted ? "#CBD5E1" : "#94A3B8";
+      return highlighted ? "#45404D" : "#8A8590";
     case "in_progress":
-      return highlighted ? "#34D399" : "#10B981";
+      return "#E5751F";
     case "planned_next":
-      return highlighted ? "#F0A060" : "#E87722";
+      return "#861F41";
     case "planned_future":
-      return highlighted ? "#FCD34D" : "#F59E0B";
+      return highlighted ? "#1D1A24" : "#45404D";
     default:
-      return "#94A3B8";
+      return "#8A8590";
   }
 }
 
+/** Station fill: passed stops are solid ink, the current stop is orange, upcoming stops are open. */
 export function nodeFillForStatus(status: PlanNode["status"]): string {
   switch (status) {
     case "completed":
-      return "#94A3B8";
+      return "#1D1A24";
     case "in_progress":
-      return "#10B981";
+      return "#E5751F";
     case "planned_next":
-      return "#E87722";
     case "planned_future":
-      return "#FBBF24";
+      return "#FFFFFF";
     default:
-      return "#94A3B8";
+      return "#FFFFFF";
   }
 }
 
 export function nodeStrokeForStatus(status: PlanNode["status"]): string {
   switch (status) {
-    case "completed":
-      return "#64748B";
-    case "in_progress":
-      return "#059669";
     case "planned_next":
-      return "#C4621A";
-    case "planned_future":
-      return "#D97706";
+      return "#861F41";
     default:
-      return "#64748B";
+      return "#1D1A24";
+  }
+}
+
+export function nodeStrokeWidthForStatus(status: PlanNode["status"]): number {
+  switch (status) {
+    case "planned_next":
+      return 4;
+    case "completed":
+      return 2;
+    default:
+      return 3;
   }
 }
 

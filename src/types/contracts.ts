@@ -1,5 +1,5 @@
 /**
- * Hokie Pathfinder — Data Contracts
+ * Artisan — Data Contracts
  * Structured JSON schemas for agent-to-agent handoffs.
  */
 

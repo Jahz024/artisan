@@ -2,20 +2,9 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Calendar, Sparkles } from "lucide-react";
 import type { PlanSummary } from "@/types/plan";
-import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { cn } from "@/lib/utils";
-
-const themeAccent: Record<string, string> = {
-  circuit_board: "border-l-4 border-l-slate-400",
-  constellation: "border-l-4 border-l-indigo-400",
-  subway_map: "border-l-4 border-l-[var(--vt-orange)]",
-  mountain_trail: "border-l-4 border-l-emerald-500",
-  watercolor_garden: "border-l-4 border-l-pink-400",
-  blueprint: "border-l-4 border-l-blue-500",
-};
+import { LINE_PALETTE } from "@/components/plan/tree-layout";
 
 function statusBadge(status: PlanSummary["status"]) {
   if (status === "ready") return "completed" as const;
@@ -24,54 +13,66 @@ function statusBadge(status: PlanSummary["status"]) {
   return "planned_future" as const;
 }
 
+const statusLabel: Record<string, string> = {
+  ready: "Ready",
+  generating: "Generating",
+  error: "Needs attention",
+};
+
+/** A tiny route strip so each saved plan reads like its own line on the map. */
+function RouteStrip({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 240 24" className="h-6 w-full" aria-hidden>
+      <path d="M 8 12 H 232" stroke={color} strokeWidth={7} strokeLinecap="round" />
+      {[8, 64, 120, 176].map((x, i) => (
+        <circle
+          key={x}
+          cx={x}
+          cy={12}
+          r={6}
+          fill={i < 2 ? "var(--ink)" : "#fff"}
+          stroke="var(--ink)"
+          strokeWidth={3}
+        />
+      ))}
+      <rect x={220} y={2} width={20} height={20} rx={10} fill="#fff" stroke="var(--ink)" strokeWidth={4} />
+    </svg>
+  );
+}
+
 interface PlanCardProps {
   plan: PlanSummary;
   index: number;
 }
 
 export function PlanCard({ plan, index }: PlanCardProps) {
-  const accent = themeAccent[plan.theme] ?? themeAccent.circuit_board;
+  const color = LINE_PALETTE[index % LINE_PALETTE.length];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.06 }}
-      whileHover={{ y: -2 }}
+      transition={{ delay: index * 0.05 }}
     >
       <Link
         href={`/plan/${plan.id}`}
-        className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--vt-maroon)]/40"
+        className="group block rounded-xl border-2 border-[var(--ink)]/15 bg-[var(--paper-raised)] p-5 transition-colors hover:border-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange)]"
       >
-        <Card
-          glow="none"
-          className={cn(
-            "relative overflow-hidden transition-shadow hover:shadow-md",
-            accent
-          )}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">{plan.name}</h3>
-              <p className="mt-1 text-sm text-slate-600">{plan.major}</p>
-            </div>
-            <Badge variant={statusBadge(plan.status)}>{plan.status}</Badge>
+        <RouteStrip color={color} />
+        <div className="mt-4 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="truncate text-2xl font-bold leading-tight text-[var(--ink)]">
+              {plan.name}
+            </h3>
+            <p className="mt-0.5 text-sm text-[var(--ink-soft)]">{plan.major}</p>
           </div>
-          <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
-            <span className="inline-flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5" />
-              {new Date(plan.updatedAt).toLocaleDateString()}
-            </span>
-            <span className="inline-flex items-center gap-1 capitalize">
-              <Sparkles className="h-3.5 w-3.5 text-[var(--vt-orange)]" />
-              {String(plan.theme).replace("_", " ")}
-            </span>
-          </div>
-          <div className="mt-4 flex items-center gap-1 text-sm font-medium text-[var(--vt-maroon)]">
-            Open plan
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </div>
-        </Card>
+          <Badge variant={statusBadge(plan.status)}>
+            {statusLabel[plan.status] ?? plan.status}
+          </Badge>
+        </div>
+        <p className="mt-4 text-sm text-[var(--ink-soft)]">
+          Updated {new Date(plan.updatedAt).toLocaleDateString()}
+        </p>
       </Link>
     </motion.div>
   );

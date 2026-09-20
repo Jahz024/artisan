@@ -11,12 +11,13 @@ interface ProgressBarProps {
   className?: string;
 }
 
+// Solid line colors, matching the transit palette on the plan map.
 const colorMap = {
-  cyan: "from-slate-600 to-slate-400",
-  purple: "from-violet-600 to-violet-400",
-  green: "from-emerald-600 to-emerald-400",
-  amber: "from-amber-600 to-amber-400",
-  pink: "from-pink-600 to-rose-400",
+  cyan: "from-[#861F41] to-[#861F41]",
+  purple: "from-[#2F5DA8] to-[#2F5DA8]",
+  green: "from-[#2E8B57] to-[#2E8B57]",
+  amber: "from-[#E5751F] to-[#E5751F]",
+  pink: "from-[#127A86] to-[#127A86]",
 };
 
 export function ProgressBar({
@@ -31,12 +32,12 @@ export function ProgressBar({
   return (
     <div className={cn("space-y-1", className)}>
       {label ? (
-        <div className="flex justify-between text-xs text-slate-600">
+        <div className="flex justify-between text-xs text-slate-400">
           <span>{label}</span>
           <span className="tabular-nums">{Math.round(pct)}%</span>
         </div>
       ) : null}
-      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+      <div className="h-2 overflow-hidden rounded-full bg-slate-800/90">
         <motion.div
           className={cn("h-full rounded-full bg-gradient-to-r", colorMap[color])}
           initial={{ width: 0 }}
