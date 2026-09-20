@@ -590,7 +590,7 @@ export function SemesterExplorer({
               key={hoveredOption ?? selectedDetail}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-2 glass-panel rounded-xl p-3"
+              className="mt-2 glass-panel rounded-xl p-4"
             >
               {(() => {
                 const detailId = hoveredOption ?? selectedDetail;
@@ -598,15 +598,45 @@ export function SemesterExplorer({
                 if (!opt || !detailId) return null;
                 const diff = difficultyTag(detailId, experiencePackage);
                 const rating = rmpRating(opt.instructor, experiencePackage);
+                const rigor = experiencePackage?.courseRigorSummaries[detailId];
+                const instrData = opt.instructor ? experiencePackage?.instructorRatings[opt.instructor] : null;
+                const vtLink = `https://catalog.vt.edu/course-search/`;
                 return (
-                  <div className="flex flex-wrap items-center gap-4 text-sm">
-                    <span className="font-mono-accent text-base font-bold text-slate-900">{formatCourseCode(detailId)}</span>
-                    <span className="font-semibold text-slate-800">{courseTitle(detailId, requirementsPackage)}</span>
-                    <span className="text-slate-600">{getCourseCredits(detailId)} credits</span>
-                    <span style={{ color: diff.color }} className="font-semibold">{diff.label}</span>
-                    {opt.instructor ? <span className="text-slate-600">{opt.instructor}{rating != null ? ` ★ ${rating.toFixed(1)}` : ""}</span> : null}
-                    <span className="text-slate-500">{opt.reason}</span>
-                    <span className="font-mono-accent text-slate-600">fit {opt.score}</span>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                      <span className="font-mono-accent text-base font-bold text-slate-900">{formatCourseCode(detailId)}</span>
+                      <span className="font-semibold text-slate-800">{courseTitle(detailId, requirementsPackage)}</span>
+                      <span className="text-slate-600">{getCourseCredits(detailId)} credits</span>
+                      <span style={{ color: diff.color }} className="font-semibold">{diff.label}</span>
+                      <a href={vtLink} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[var(--maroon)] underline hover:text-[var(--orange)]">
+                        View in VT Catalog ↗
+                      </a>
+                    </div>
+                    {opt.instructor ? (
+                      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-[var(--paper-sunk)] px-3 py-2 text-sm">
+                        <span className="font-semibold text-slate-800">👤 {opt.instructor}</span>
+                        {rating != null ? (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">★ {rating.toFixed(1)} / 5</span>
+                        ) : null}
+                        {instrData?.numRatings ? (
+                          <span className="text-xs text-slate-500">{instrData.numRatings} ratings</span>
+                        ) : null}
+                        {instrData?.wouldTakeAgain != null && instrData.wouldTakeAgain > 0 ? (
+                          <span className="text-xs text-slate-500">{Math.round(instrData.wouldTakeAgain)}% would take again</span>
+                        ) : null}
+                        {instrData?.difficulty != null ? (
+                          <span className="text-xs text-slate-500">Difficulty: {instrData.difficulty.toFixed(1)} / 5</span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-400">No instructor data available</div>
+                    )}
+                    {rigor ? (
+                      <div className="text-xs text-slate-500">
+                        Avg difficulty: {rigor.averageDifficulty?.toFixed(1) ?? "N/A"} · {rigor.workloadDescription}
+                      </div>
+                    ) : null}
+                    <div className="text-xs text-slate-500">{opt.reason}</div>
                   </div>
                 );
               })()}

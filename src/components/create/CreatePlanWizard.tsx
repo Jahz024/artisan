@@ -321,7 +321,8 @@ export function CreatePlanWizard() {
               <label className="block text-sm">
                 <span className="text-slate-400">No classes before</span>
                 <input
-                  type="time"
+                  type="text"
+                  placeholder="e.g. 09:00"
                   value={preferences.timePreferences.noClassesBefore ?? "09:00"}
                   onChange={(e) =>
                     setPreferences((p) => ({
