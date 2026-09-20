@@ -798,14 +798,49 @@ function getAlternatives(
   expPkg: ExperiencePackage,
   prefs: UserPreferences
 ) {
+  const alternatives: {
+    courseId?: string;
+    sectionCrn?: string;
+    instructor?: string;
+    score: number;
+    reason: string;
+  }[] = [];
+
+  const block = reqPkg.requirementBlocks.find(
+    (b) => b.eligibleCourses.includes(courseId) && b.remaining > 0
+  );
+
+  if (block) {
+    const otherCourses = block.eligibleCourses.filter((c) => c !== courseId);
+    for (const altCourseId of otherCourses.slice(0, 10)) {
+      const sections = reqPkg.currentTermSections.filter((s) => s.courseId === altCourseId);
+      const bestSection = sections[0];
+      const rigor = expPkg.courseRigorSummaries[altCourseId];
+      const diffLabel = rigor
+        ? rigor.averageDifficulty < 2.5 ? "Easy" : rigor.averageDifficulty < 3.5 ? "Moderate" : "Hard"
+        : "Unknown difficulty";
+      alternatives.push({
+        courseId: altCourseId,
+        sectionCrn: bestSection?.crn,
+        instructor: bestSection?.instructor,
+        score: bestSection ? scoreSection(bestSection, expPkg, prefs) : 0.6,
+        reason: `Also counts toward ${block.name}. ${diffLabel}.${bestSection ? ` ${bestSection.instructor}, ${bestSection.days} ${bestSection.startTime}` : ""}`,
+      });
+    }
+  }
+
   const sections = reqPkg.currentTermSections.filter((s) => s.courseId === courseId);
-  return sections.slice(0, 3).map((s) => ({
-    courseId,
-    sectionCrn: s.crn,
-    instructor: s.instructor,
-    score: scoreSection(s, expPkg, prefs),
-    reason: `${s.instructor}, ${s.days} ${s.startTime}–${s.endTime}`,
-  }));
+  for (const s of sections.slice(0, 3)) {
+    alternatives.push({
+      courseId,
+      sectionCrn: s.crn,
+      instructor: s.instructor,
+      score: scoreSection(s, expPkg, prefs),
+      reason: `${s.instructor}, ${s.days} ${s.startTime}–${s.endTime}`,
+    });
+  }
+
+  return alternatives;
 }
 
 function delay(ms: number): Promise<void> {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -124,6 +124,9 @@ export function PlanViewClient() {
     if (plan) setDraftPreferences(plan.preferences);
   }, [plan?.id]);
 
+  const regenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startGenRef = useRef<() => void>(() => {});
+
   const handlePreferencesChange = useCallback(
     async (next: UserPreferences) => {
       setDraftPreferences(next);
@@ -134,6 +137,10 @@ export function PlanViewClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ preferences: next }),
       });
+      if (regenTimerRef.current) clearTimeout(regenTimerRef.current);
+      regenTimerRef.current = setTimeout(() => {
+        startGenRef.current();
+      }, 1500);
     },
     [plan, planId]
   );
@@ -170,6 +177,8 @@ export function PlanViewClient() {
       setGenerating(false);
     }
   }, [planId, loadPlan, play]);
+
+  startGenRef.current = () => void startGeneration();
 
   useEffect(() => {
     if (searchParams.get("generate") === "1" && plan && plan.status === "draft" && !generating) {
@@ -256,60 +265,60 @@ export function PlanViewClient() {
           {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
         </motion.section>
 
+        {/* 1. Graduation progress — always at the very top */}
+        {graph ? <GraduationProgress planGraph={graph} /> : null}
+
+        {/* 2. Filters — right below grad progress */}
+        {preferences && graph ? (
+          <div className="mt-4">
+            <PlanFilters
+              planGraph={graph}
+              preferences={preferences}
+              onPreferencesChange={(next) => void handlePreferencesChange(next)}
+              onRegenerate={() => void startGeneration()}
+              regenerating={generating}
+            />
+          </div>
+        ) : null}
+
+        {/* 3. Semester explorer graph */}
+        {graph && preferences ? (
+          <SemesterExplorer
+            planGraph={graph}
+            requirementsPackage={reqPkg}
+            experiencePackage={expPkg}
+            preferences={preferences}
+            onPlanChange={(g) => void persistGraph(g)}
+          />
+        ) : !graph ? (
+          <p className="text-center text-slate-500">No plan graph yet.</p>
+        ) : null}
+
+        {graph ? <PrereqChainView planGraph={graph} className="mt-8 hidden" /> : null}
+
+        {/* 4. Course lists */}
+        {graph ? (
+          <SemesterCourseList planGraph={graph} requiredOnly />
+        ) : null}
+
+        {graph ? (
+          <SemesterCourseList planGraph={graph} optionalOnly />
+        ) : null}
+
+        {/* 5. Weekly schedule */}
+        {graph ? (
+          <WeeklyScheduleView
+            planGraph={graph}
+            requirementsPackage={reqPkg}
+          />
+        ) : null}
+
+        {/* 6. Agent pipeline — at the very bottom */}
         <AgentActivityFeed
           events={events}
           isGenerating={generating}
-          className="mb-8"
+          className="mt-8"
         />
-
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          {/* Sidebar: Filters */}
-          <aside className="order-2 flex w-full shrink-0 flex-col gap-4 lg:order-1 lg:max-h-[calc(100vh-8rem)] lg:w-[340px] lg:overflow-y-auto lg:pr-1">
-            {preferences && graph ? (
-              <PlanFilters
-                planGraph={graph}
-                preferences={preferences}
-                onPreferencesChange={(next) => void handlePreferencesChange(next)}
-                onRegenerate={() => void startGeneration()}
-                regenerating={generating}
-              />
-            ) : null}
-          </aside>
-
-          {/* Main content */}
-          <div className="order-1 min-w-0 flex-1 lg:order-2">
-            {graph ? <GraduationProgress planGraph={graph} /> : null}
-
-            {graph && preferences ? (
-              <SemesterExplorer
-                planGraph={graph}
-                requirementsPackage={reqPkg}
-                experiencePackage={expPkg}
-                preferences={preferences}
-                onPlanChange={(g) => void persistGraph(g)}
-              />
-            ) : !graph ? (
-              <p className="text-center text-slate-500">No plan graph yet.</p>
-            ) : null}
-
-            {graph ? <PrereqChainView planGraph={graph} className="mt-8 hidden" /> : null}
-
-            {graph ? (
-              <SemesterCourseList planGraph={graph} requiredOnly />
-            ) : null}
-
-            {graph ? (
-              <SemesterCourseList planGraph={graph} optionalOnly />
-            ) : null}
-
-            {graph ? (
-              <WeeklyScheduleView
-                planGraph={graph}
-                requirementsPackage={reqPkg}
-              />
-            ) : null}
-          </div>
-        </div>
       </main>
     </div>
   );

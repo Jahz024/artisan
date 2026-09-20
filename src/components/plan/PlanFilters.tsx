@@ -417,9 +417,11 @@ export interface SemesterCourseListProps {
   planGraph: PlanGraph | null;
   /** When true, only show major-required courses (not electives/pathways) */
   requiredOnly?: boolean;
+  /** When true, only show optional/elective courses */
+  optionalOnly?: boolean;
 }
 
-export function SemesterCourseList({ planGraph, requiredOnly }: SemesterCourseListProps) {
+export function SemesterCourseList({ planGraph, requiredOnly, optionalOnly }: SemesterCourseListProps) {
   const [expandedTerms, setExpandedTerms] = useState<Set<string>>(() => new Set());
 
   const semesterRows = useMemo(() => {
@@ -443,11 +445,48 @@ export function SemesterCourseList({ planGraph, requiredOnly }: SemesterCourseLi
             );
           });
         }
+        if (optionalOnly) {
+          const electiveNodes = nodes.filter((n) => {
+            const id = n.requirementBlockId.toLowerCase();
+            return (
+              id.includes("elective") ||
+              id.includes("pathways") ||
+              id.includes("free") ||
+              id.includes("gen")
+            ) && !(
+              id === "cs-core" ||
+              id === "math-major" ||
+              id === "statistics" ||
+              id === "science"
+            );
+          });
+          const expanded: PlanNode[] = [];
+          const seen = new Set<string>();
+          for (const n of electiveNodes) {
+            if (!seen.has(n.courseId)) {
+              seen.add(n.courseId);
+              expanded.push(n);
+            }
+            for (const alt of n.alternatives) {
+              if (alt.courseId && !seen.has(alt.courseId)) {
+                seen.add(alt.courseId);
+                expanded.push({
+                  ...n,
+                  id: `${n.id}-alt-${alt.courseId}`,
+                  courseId: alt.courseId,
+                  instructor: alt.instructor,
+                  score: alt.score,
+                });
+              }
+            }
+          }
+          nodes = expanded;
+        }
         const credits = sumSemesterCredits(nodes);
         return { sem, nodes, credits, tk: termKey(sem.term) };
       })
       .filter((row) => row.nodes.length > 0);
-  }, [planGraph, requiredOnly]);
+  }, [planGraph, requiredOnly, optionalOnly]);
 
   useEffect(() => {
     if (semesterRows.length === 0) return;
@@ -474,7 +513,7 @@ export function SemesterCourseList({ planGraph, requiredOnly }: SemesterCourseLi
     <section className="mt-6 rounded-2xl border border-slate-800/80 bg-white p-4 shadow-sm">
       <h3 className="flex items-center gap-2 text-sm font-bold text-slate-100">
         <ListTree className="h-4 w-4 text-[#861F41]" aria-hidden />
-        {requiredOnly ? "Required courses by semester" : "Semester course list"}
+        {requiredOnly ? "Required courses by semester" : optionalOnly ? "Optional courses by semester" : "Semester course list"}
       </h3>
       <ul className="mt-3 space-y-2">
         {semesterRows.map(({ sem, nodes, credits, tk }) => {
